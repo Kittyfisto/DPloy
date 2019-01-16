@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{54540167-9D3B-4F7E-AEE1-5358DF5568A0}</ProjectGuid>
+    <ProjectGuid>{7724153A-50CB-4500-95B3-40B2CF1C1150}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>DPloy</RootNamespace>
-    <AssemblyName>DPloy</AssemblyName>
+    <RootNamespace>DPloy.Node</RootNamespace>
+    <AssemblyName>DPloy.Node</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,21 +31,40 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CSScriptLibrary">
+      <HintPath>..\packages\CS-Script.bin.3.28.7\lib\net46\CSScriptLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpRemote, Version=0.5.166.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpRemote.0.5.166\lib\net45\SharpRemote.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpRemote.Host, Version=0.5.166.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpRemote.0.5.166\lib\net45\SharpRemote.Host.exe</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="Bootstrapper.cs" />
+    <Compile Include="ExitCode.cs" />
+    <Compile Include="Node.cs" />
+    <Compile Include="SharpRemoteImplementations\File.cs" />
+    <Compile Include="Application.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SharpRemoteImplementations\Paths.cs" />
+    <Compile Include="SharpRemoteImplementations\Shell.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DPloy.Core\DPloy.Core.csproj">
+      <Project>{BD407D94-E6B7-4E95-A359-B5AA0DF09DBF}</Project>
+      <Name>DPloy.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
