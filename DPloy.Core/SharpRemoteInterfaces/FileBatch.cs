@@ -19,7 +19,7 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		[Pure]
 		public bool Any()
 		{
-			// TODO: Include other lists once they're here
+			// TODO: Include other instructions once they're here
 			return FilesToCopy.Any();
 		}
 	}

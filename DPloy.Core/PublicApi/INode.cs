@@ -7,6 +7,11 @@ namespace DPloy.Core.PublicApi
 	///     The public interface of a node - a remote computer on which software shall be installed,
 	///     files copied, etc...
 	/// </summary>
+	/// <remarks>
+	/// TODO: Introduce API methods to copy a folder (recursively) as well as an array of files
+	/// TODO: Introduce API methods to download files from a webserver (e.g. the latest build from jenkins, for example)
+	/// TODO: Introduce API toggles to force copy files, if desired (maybe these don't need to be performed on a per-method basis but maybe per node)
+	/// </remarks>
 	public interface INode : IDisposable
 	{
 		#region Filesystem

@@ -14,27 +14,32 @@ namespace DPloy.Node
 	/// <remarks>
 	///     This is the counterpart of the 'NodeClient' class in the DPloy.Distributor project.
 	/// </remarks>
+	/// <remarks>
+	///     TODO: Introduce audit log which captures all commands from all distributors EVER, maybe use IsabelDb for this.. (or a plain text file)
+	///     TODO: Configuration via app.config file: Only allow certain computers to distribute software to this node: Use a challenge response algorithm to prevent replay attacks
+	/// </remarks>
 	public sealed class NodeServer
 		: IDisposable
 	{
-		private readonly SocketEndPoint _socket;
 		private readonly Files _files;
-		private readonly Shell _shell;
 		private readonly Services _services;
+		private readonly Shell _shell;
+		private readonly SocketEndPoint _socket;
 
 		public NodeServer()
-			: this(null, null)
-		{ }
+			: this(serviceName: null, networkServiceDiscoverer: null)
+		{
+		}
 
 		public NodeServer(string serviceName, INetworkServiceDiscoverer networkServiceDiscoverer)
 		{
 			_socket = new SocketEndPoint(EndPointType.Server,
-				serviceName,
-				networkServiceDiscoverer: networkServiceDiscoverer,
-				heartbeatSettings: new HeartbeatSettings
-				{
-					AllowRemoteHeartbeatDisable = true
-				});
+			                             serviceName,
+			                             networkServiceDiscoverer: networkServiceDiscoverer,
+			                             heartbeatSettings: new HeartbeatSettings
+			                             {
+				                             AllowRemoteHeartbeatDisable = true
+			                             });
 			_socket.OnDisconnected += SocketOnOnDisconnected;
 
 			_files = new Files();
@@ -45,11 +50,6 @@ namespace DPloy.Node
 
 			_services = new Services();
 			_socket.CreateServant<IServices>(ObjectIds.Services, _services);
-		}
-
-		private void SocketOnOnDisconnected(EndPoint arg1, ConnectionId arg2)
-		{
-			_files.CloseAll();
 		}
 
 		#region IDisposable
@@ -65,6 +65,11 @@ namespace DPloy.Node
 		}
 
 		#endregion
+
+		private void SocketOnOnDisconnected(EndPoint arg1, ConnectionId arg2)
+		{
+			_files.CloseAll();
+		}
 
 		public void Bind(IPEndPoint ipEndPoint)
 		{
