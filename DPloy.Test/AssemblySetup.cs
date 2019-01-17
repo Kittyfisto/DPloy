@@ -15,7 +15,7 @@ namespace DPloy.Test
 			UriBuilder uri = new UriBuilder(codeBase);
 			string path = Uri.UnescapeDataString(uri.Path);
 			var assemblyPath = Path.GetDirectoryName(path);
-			var projectPath = Path.Combine(assemblyPath, "..", "..");
+			var projectPath = Path.Combine(assemblyPath, "..", "..", "DPloy.Test");
 			Directory.SetCurrentDirectory(projectPath);
 		}
 	}

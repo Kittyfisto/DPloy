@@ -10,16 +10,17 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DPloy.Test</RootNamespace>
     <AssemblyName>DPloy.Test</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -27,7 +28,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -60,6 +61,10 @@
     <ProjectReference Include="..\DPloy.Core\DPloy.Core.csproj">
       <Project>{bd407d94-e6b7-4e95-a359-b5aa0df09dbf}</Project>
       <Name>DPloy.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DPloy.Distributor\DPloy.Distributor.csproj">
+      <Project>{54540167-9d3b-4f7e-aee1-5358df5568a0}</Project>
+      <Name>DPloy.Distributor</Name>
     </ProjectReference>
     <ProjectReference Include="..\DPloy.Node\DPloy.Node.csproj">
       <Project>{7724153a-50cb-4500-95b3-40b2cf1c1150}</Project>

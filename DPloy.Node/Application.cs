@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using SharpRemote.ServiceDiscovery;
 
 namespace DPloy.Node
 {
@@ -11,16 +12,22 @@ namespace DPloy.Node
 	{
 		public static void Run()
 		{
-			using (var node = new Node())
+			var machineName = Environment.MachineName;
+			var serviceName = $"{machineName}.DPloy.Node";
+
+			using (var discoverer = new NetworkServiceDiscoverer())
+			using (var node = new NodeServer(serviceName, discoverer))
 			{
-				node.Bind(new IPEndPoint(IPAddress.Loopback, port: 12345));
+				node.Bind(IPAddress.Any);
+
+				Console.WriteLine("Waiting for incoming connections (you can write exit to end the program)...");
+
 				WaitUntilExit();
 			}
 		}
 
 		private static void WaitUntilExit()
 		{
-			Console.WriteLine("Write exit to end the program...");
 			while (true)
 			{
 				var command = Console.ReadLine();

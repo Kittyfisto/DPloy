@@ -15,6 +15,8 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public int Execute(string command)
 		{
+			Log.InfoFormat("Executing '{0}'...", command);
+
 			using (var process = new Process())
 			{
 				try
@@ -23,7 +25,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 					{
 						WindowStyle = ProcessWindowStyle.Hidden,
 						FileName = "cmd.exe",
-						Arguments = command
+						Arguments = $"/C {command}"
 					};
 					process.StartInfo = startInfo;
 					process.Start();
@@ -31,14 +33,14 @@ namespace DPloy.Node.SharpRemoteImplementations
 				}
 				catch (Exception e)
 				{
-					Log.InfoFormat("Executing '{0}' caused an unexpected exception:\r\n{1}",
+					Log.InfoFormat("The command '{0}' caused an unexpected exception:\r\n{1}",
 					               command,
 					               e);
 					throw;
 				}
 
 				var exitCode = process.ExitCode;
-				Log.InfoFormat("Executing '{0}' returned '{1}'", command, exitCode);
+				Log.InfoFormat("The command '{0}' returned '{1}'", command, exitCode);
 
 				return exitCode;
 			}

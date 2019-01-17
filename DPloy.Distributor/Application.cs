@@ -4,7 +4,7 @@
 	{
 		public static void Run()
 		{
-			const string scriptFilePath = @"C:\Users\Simon\Documents\GitHub\DPloy\TestDeployment.cs";
+			const string scriptFilePath = @"C:\Snapshots\DPloy\TestDeployment.cs";
 			Executor.Run(scriptFilePath);
 		}
 	}

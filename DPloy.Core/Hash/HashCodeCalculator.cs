@@ -1,36 +1,67 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
+using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace DPloy.Core.Hash
 {
-	public sealed class HashCodeCalculator
-		: IDisposable
+	public static class HashCodeCalculator
 	{
-		private readonly SHA256 _sha;
-
-		public HashCodeCalculator()
+		[Pure]
+		public static byte[] Sha256(string filePath)
 		{
-			_sha = SHA256.Create();
+			using (var algorithm = SHA256.Create())
+				return CalculateHash(filePath, algorithm);
 		}
 
-		public void Append(byte[] buffer, int length)
+		[Pure]
+		public static byte[] MD5(string filePath)
 		{
-			_sha.TransformBlock(buffer, 0, length, buffer, 0);
+			using (var algorithm = System.Security.Cryptography.MD5.Create())
+				return CalculateHash(filePath, algorithm);
 		}
 
-		public byte[] CalculateHash()
+		[Pure]
+		private static byte[] CalculateHash(string filePath, HashAlgorithm algorithm)
 		{
-			_sha.TransformFinalBlock(new byte[0], 0, 0);
-			return _sha.Hash;
+			using (var stream = File.OpenRead(filePath))
+			{
+				const int bufferSize = 4096;
+				var buffer = new Byte[bufferSize];
+
+				while (true)
+				{
+					int bytesRead = stream.Read(buffer, 0, buffer.Length);
+					if (bytesRead <= 0)
+						break;
+
+					algorithm.TransformBlock(buffer, 0, bytesRead, buffer, 0);
+				}
+
+				algorithm.TransformFinalBlock(new byte[0], 0, 0);
+				return algorithm.Hash;
+			}
 		}
 
-		#region IDisposable
-
-		public void Dispose()
+		[Pure]
+		public static bool AreEqual(byte[] hash, byte[] otherHash)
 		{
-			_sha?.Dispose();
-		}
+			if (hash.Length != otherHash.Length)
+				return false;
 
-		#endregion
+			for (var i = 0; i < hash.Length; ++i)
+				if (hash[i] != otherHash[i])
+					return false;
+
+			return true;
+		}
+		public static string ToString(byte[] hash)
+		{
+			StringBuilder hex = new StringBuilder(hash.Length * 2);
+			foreach (byte b in hash)
+				hex.AppendFormat("{0:x2}", b);
+			return hex.ToString();
+		}
 	}
 }

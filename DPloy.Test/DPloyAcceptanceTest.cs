@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
@@ -38,10 +39,35 @@ namespace DPloy.Test
 			TestCopyFile("4k.txt");
 		}
 
+		[Test]
+		public void TestCopySeveralFiles()
+		{
+			using (var node = new Node.NodeServer())
+			using (var deployer = new Distributor())
+			{
+				var ep = node.Bind(IPAddress.Loopback);
+				using (var client = deployer.ConnectTo(ep))
+				{
+					var sourceFileNames = new[] {"1byte_a.txt", "1byte_b.txt", "4k.txt", "Empty.txt"};
+					var sourceFiles = sourceFileNames.Select(x => Path.Combine("TestData", x));
+					var destinationFolder = GetTestTempDirectory();
+					var destinationFiles = sourceFileNames.Select(x => Path.Combine(destinationFolder, x));
+
+					foreach (var file in destinationFiles)
+						File.Exists(file).Should().BeFalse();
+
+					client.CopyFiles(sourceFiles, destinationFolder);
+
+					foreach (var file in destinationFiles)
+						File.Exists(file).Should().BeTrue();
+				}
+			}
+		}
+
 		private void TestCopyFile(string fileName)
 		{
-			using (var node = new Node.Node())
-			using (var deployer = new Core.Distributor())
+			using (var node = new Node.NodeServer())
+			using (var deployer = new Distributor())
 			{
 				var ep = node.Bind(IPAddress.Loopback);
 				using (var client = deployer.ConnectTo(ep))

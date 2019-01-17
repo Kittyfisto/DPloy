@@ -12,9 +12,9 @@ namespace DPloy.Test
 		[Test]
 		public void TestUnequalHash()
 		{
-			var file = new File();
-			var hashA = file.CalculateHash(@"TestData\1byte_a.txt");
-			var hashB = file.CalculateHash(@"TestData\1byte_b.txt");
+			var file = new Files();
+			var hashA = file.CalculateSha256(@"TestData\1byte_a.txt");
+			var hashB = file.CalculateSha256(@"TestData\1byte_b.txt");
 
 			hashA.Should().NotEqual(hashB);
 		}
@@ -22,9 +22,9 @@ namespace DPloy.Test
 		[Test]
 		public void TestEqualHash()
 		{
-			var file = new File();
-			var hashA = file.CalculateHash(@"TestData\1byte_a.txt");
-			var hashB = file.CalculateHash(@"TestData\1byte_a.txt");
+			var file = new Files();
+			var hashA = file.CalculateSha256(@"TestData\1byte_a.txt");
+			var hashB = file.CalculateSha256(@"TestData\1byte_a.txt");
 
 			hashA.Should().Equal(hashB);
 		}
@@ -32,9 +32,9 @@ namespace DPloy.Test
 		[Test]
 		public void TestCalculateHashEmptyFile()
 		{
-			var file = new File();
+			var file = new Files();
 			var path = @"TestData\Empty.txt";
-			var hash = file.CalculateHash(path);
+			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
 			hash.Should().Equal(actualHash);
@@ -43,9 +43,9 @@ namespace DPloy.Test
 		[Test]
 		public void TestCalculateHash1byteFile()
 		{
-			var file = new File();
+			var file = new Files();
 			var path = @"TestData\1byte_a.txt";
-			var hash = file.CalculateHash(path);
+			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
 			hash.Should().Equal(actualHash);
@@ -54,9 +54,9 @@ namespace DPloy.Test
 		[Test]
 		public void TestCalculateHash4kFile()
 		{
-			var file = new File();
+			var file = new Files();
 			var path = @"TestData\4k.txt";
-			var hash = file.CalculateHash(path);
+			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
 			hash.Should().Equal(actualHash);

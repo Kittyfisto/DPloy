@@ -1,0 +1,10 @@
+- Configuration via app.config file:
+  - Only allow certain computers to distribute software to this node: Use a challenge response algorithm to prevent replay attacks
+- Introduce audit log which captures all commands from all distributors EVER
+  - Maybe use IsabelDb for this.. (or a plain text file)
+- Introduce API methods to copy a folder (recursively) as well as an array of files
+- Introduce API methods to download files from a webserver (e.g. the latest build from jenkins, for example)
+- Introduce API toggles to force copy files, if desired (maybe these don't need to be performed on a per-method basis but maybe per node)
+- Improve performance of copying many (thousands) of small files
+  - See how stuff can be batched together, maybe introduce an alternate interface where the filename + data is packed into a tight array so hundreds of files
+    can be transported in one go

@@ -5,5 +5,6 @@
 		public static uint Paths = 1;
 		public static uint File = 2;
 		public static uint Shell = 3;
+		public static uint Services = 4;
 	}
 }
