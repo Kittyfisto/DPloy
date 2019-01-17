@@ -13,6 +13,16 @@ namespace DPloy.Core
 		public static readonly string Temp = "%Temp%";
 		public static readonly string AppData = "%AppData%";
 		public static readonly string LocalAppData = "%LocalAppData%";
+		public static readonly string Desktop = "%Desktop%";
+		public static readonly string History = "%History%";
+		public static readonly string UserProfile = "%UserProfile%";
+		public static readonly string WinDir = "%WinDir%";
+		public static readonly string ProgramFiles = "%ProgramFiles%";
+		public static readonly string ProgramFilesX86 = "%ProgramFilesX86%";
+		public static readonly string System = "%System%";
+		public static readonly string SystemX86 = "%SystemX86%";
+		public static readonly string CommonProgramFiles = "%CommonProgramFiles%";
+		public static readonly string CommonProgramFilesX86 = "%CommonProgramFilesX86%";
 
 		static Paths()
 		{
@@ -20,7 +30,17 @@ namespace DPloy.Core
 			{
 				{Temp, Path.GetTempPath()},
 				{AppData, Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)},
-				{LocalAppData, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}
+				{LocalAppData, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)},
+				{Desktop, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop))},
+				{History, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.History))},
+				{UserProfile, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))},
+				{WinDir, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows))},
+				{ProgramFiles, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles))},
+				{ProgramFilesX86, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86))},
+				{System, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System))},
+				{SystemX86, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86))},
+				{CommonProgramFiles, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles))},
+				{CommonProgramFilesX86, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86))}
 			};
 		}
 
