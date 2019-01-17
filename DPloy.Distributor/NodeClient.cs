@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ using log4net;
 using SharpRemote;
 using SharpRemote.ServiceDiscovery;
 
-namespace DPloy
+namespace DPloy.Distributor
 {
 	/// <summary>
 	///     Implementation of the public node interface - responsible for performing
@@ -26,7 +27,6 @@ namespace DPloy
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
 		private readonly IFiles _files;
-		private readonly IPaths _paths;
 		private readonly IShell _shell;
 		private readonly IServices _services;
 		private readonly SocketEndPoint _socket;
@@ -36,7 +36,6 @@ namespace DPloy
 		private NodeClient(SocketEndPoint socket)
 		{
 			_socket = socket;
-			_paths = _socket.GetExistingOrCreateNewProxy<IPaths>(ObjectIds.Paths);
 			_files = _socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File);
 			_shell = _socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell);
 			_services = _socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services);
@@ -59,9 +58,9 @@ namespace DPloy
 				socket.Connect(endPoint);
 				return new NodeClient(socket);
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
-				Console.WriteLine(e);
+				socket.Dispose();
 				throw;
 			}
 		}
@@ -90,11 +89,66 @@ namespace DPloy
 
 		public void CopyFile(string sourceFilePath, string destinationFolder)
 		{
+			CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFolder);
+		}
+
+		private void CopyFilePrivate(string sourceFilePath, string destinationFolder)
+		{
 			var fileSize = new FileInfo(sourceFilePath).Length;
 			CopyFileChunked(sourceFilePath, destinationFolder, fileSize);
 		}
 
 		public void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder)
+		{
+			CopyFilesPrivate(sourceFiles.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
+		}
+
+		public void Install(string installerPath, string commandLine = null)
+		{
+			InstallPrivate(Paths.NormalizeAndEvaluate(installerPath), commandLine);
+		}
+
+		public void ExecuteFile(string clientFilePath, string commandLine = null)
+		{
+			var command = $"\"{clientFilePath}\" {commandLine}";
+			var returnCode = ExecuteCommand(command);
+			if (returnCode != 0)
+				throw new Exception($"The command {command} returned {returnCode}");
+		}
+
+		public int ExecuteCommand(string cmd)
+		{
+			Log.InfoFormat("Executing command '{0}'...", cmd);
+
+			return _shell.Execute(cmd);
+		}
+
+		public void StartService(string serviceName)
+		{
+			Log.InfoFormat("Starting service '{0}'...", serviceName);
+
+			_services.Start(serviceName);
+		}
+
+		public void StopService(string serviceName)
+		{
+			Log.InfoFormat("Stopping service '{0}'...", serviceName);
+
+			_services.Stop(serviceName);
+		}
+
+		#endregion
+
+		private void InstallPrivate(string installerPath, string commandLine)
+		{
+			var destinationPath = Path.Combine(Paths.Temp, "DPloy", "Installers");
+			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
+
+			CopyFile(installerPath, destinationPath);
+			ExecuteFile(destinationFilePath, commandLine ?? "/S");
+		}
+
+		private void CopyFilesPrivate(IEnumerable<string> sourceFiles, string destinationFolder)
 		{
 			var smallFiles = new List<string>();
 			var bigFiles = new List<string>();
@@ -134,46 +188,6 @@ namespace DPloy
 
 			return lastTask;
 		}
-		
-		public void Install(string installerPath, string commandLine = null)
-		{
-			var destinationPath = Path.Combine(_paths.GetTempPath(), "DPloy", "Installers");
-			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
-
-			CopyFile(installerPath, destinationPath);
-			ExecuteFile(destinationFilePath, commandLine ?? "/S");
-		}
-
-		public void ExecuteFile(string clientFilePath, string commandLine = null)
-		{
-			var command = $"\"{clientFilePath}\" {commandLine}";
-			var returnCode = ExecuteCommand(command);
-			if (returnCode != 0)
-				throw new Exception($"The command {command} returned {returnCode}");
-		}
-
-		public int ExecuteCommand(string cmd)
-		{
-			Log.InfoFormat("Executing command '{0}'...", cmd);
-
-			return _shell.Execute(cmd);
-		}
-
-		public void StartService(string serviceName)
-		{
-			Log.InfoFormat("Starting service '{0}'...", serviceName);
-
-			_services.Start(serviceName);
-		}
-
-		public void StopService(string serviceName)
-		{
-			Log.InfoFormat("Stopping service '{0}'...", serviceName);
-
-			_services.Stop(serviceName);
-		}
-
-		#endregion
 
 		private static void ClassifyFilesBySize(IEnumerable<string> sourceFiles, List<string> smallFiles, List<string> bigFiles)
 		{
@@ -258,7 +272,7 @@ namespace DPloy
 			{
 				var instruction = new CopyFile
 				{
-					FileName = Path.Combine(destinationFolder, Path.GetFileName(fileName)),
+					FilePath = Path.Combine(destinationFolder, Path.GetFileName(fileName)),
 					Content = File.ReadAllBytes(fileName)
 				};
 				batch.FilesToCopy.Add(instruction);

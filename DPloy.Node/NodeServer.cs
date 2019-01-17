@@ -18,7 +18,6 @@ namespace DPloy.Node
 		: IDisposable
 	{
 		private readonly SocketEndPoint _socket;
-		private readonly Paths _paths;
 		private readonly Files _files;
 		private readonly Shell _shell;
 		private readonly Services _services;
@@ -37,9 +36,6 @@ namespace DPloy.Node
 					AllowRemoteHeartbeatDisable = true
 				});
 			_socket.OnDisconnected += SocketOnOnDisconnected;
-
-			_paths = new Paths();
-			_socket.CreateServant<IPaths>(ObjectIds.Paths, _paths);
 
 			_files = new Files();
 			_socket.CreateServant<IFiles>(ObjectIds.File, _files);
@@ -61,7 +57,6 @@ namespace DPloy.Node
 		public void Dispose()
 		{
 			// These objects shall be kept alive at least until this method is called!
-			GC.KeepAlive(_paths);
 			GC.KeepAlive(_files);
 			GC.KeepAlive(_shell);
 			GC.KeepAlive(_services);

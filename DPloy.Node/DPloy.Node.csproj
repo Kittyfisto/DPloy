@@ -7,7 +7,7 @@
     <ProjectGuid>{7724153A-50CB-4500-95B3-40B2CF1C1150}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>DPloy.Node</RootNamespace>
-    <AssemblyName>DPloy.Node</AssemblyName>
+    <AssemblyName>Node</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -49,7 +49,6 @@
     <Compile Include="SharpRemoteImplementations\Files.cs" />
     <Compile Include="Application.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SharpRemoteImplementations\Paths.cs" />
     <Compile Include="SharpRemoteImplementations\Services.cs" />
     <Compile Include="SharpRemoteImplementations\Shell.cs" />
   </ItemGroup>

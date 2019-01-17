@@ -6,7 +6,7 @@ namespace DPloy.Core.SharpRemoteInterfaces
 	public sealed class CopyFile
 	{
 		[DataMember(Name = "FileName")]
-		public string FileName;
+		public string FilePath;
 
 		[DataMember(Name = "Content")]
 		public byte[] Content;

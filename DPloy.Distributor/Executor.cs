@@ -4,7 +4,7 @@ using CSScriptLibrary;
 using DPloy.Core.PublicApi;
 using log4net;
 
-namespace DPloy
+namespace DPloy.Distributor
 {
 	static class Executor
 	{
@@ -16,7 +16,7 @@ namespace DPloy
 			using (var distributor = new Distributor())
 			{
 				Log.InfoFormat("Executing '{0}'...", scriptFilePath);
-				script.Main((IDistributor)distributor);
+				script.Run((IDistributor)distributor);
 				Log.InfoFormat("Done!");
 			}
 		}
@@ -27,7 +27,7 @@ namespace DPloy
 			
 			var script = File.ReadAllText(scriptFilePath);
 			var evaluator = CSScript.Evaluator;
-			return evaluator.LoadMethod(script);
+			return evaluator.LoadCode(script);
 		}
 	}
 }

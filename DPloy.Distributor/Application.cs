@@ -1,11 +1,12 @@
-﻿namespace DPloy
+﻿using DPloy.Core;
+
+namespace DPloy.Distributor
 {
 	class Application
 	{
-		public static void Run()
+		public static void Run(CommandLineOptions opts)
 		{
-			const string scriptFilePath = @"C:\Snapshots\DPloy\TestDeployment.cs";
-			Executor.Run(scriptFilePath);
+			Executor.Run(Paths.NormalizeAndEvaluate(opts.Script));
 		}
 	}
 }

@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DPloy.Test</RootNamespace>
     <AssemblyName>DPloy.Test</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
@@ -50,9 +50,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblySetup.cs" />
-    <Compile Include="DPloyAcceptanceTest.cs" />
+    <Compile Include="DistributorAcceptanceTest.cs" />
+    <Compile Include="DistributorTest.cs" />
     <Compile Include="FileTest.cs" />
+    <Compile Include="PathsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Scripts\Copy1byte_a.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

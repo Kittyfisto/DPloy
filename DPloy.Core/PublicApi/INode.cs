@@ -14,6 +14,10 @@ namespace DPloy.Core.PublicApi
 		/// <summary>
 		///     Copies a single file to this node, blocks until the file has been fully transfered or an error occured.
 		/// </summary>
+		/// <remarks>
+		///     <paramref name="destinationFolder"/> can be absolute or it may start with a special folder such as:
+		///     %temp%, %localappdata%, etc...
+		/// </remarks>
 		/// <param name="sourceFilePath"></param>
 		/// <param name="destinationFolder"></param>
 		void CopyFile(string sourceFilePath, string destinationFolder);

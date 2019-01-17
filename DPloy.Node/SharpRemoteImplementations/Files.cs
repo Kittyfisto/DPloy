@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.SharpRemoteInterfaces;
 using log4net;
@@ -24,6 +25,8 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public bool Exists(string filePath, long expectedFileSize, byte[] expectedHash)
 		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
 			if (!File.Exists(filePath))
 			{
 				Log.DebugFormat("The file '{0}' does not exist", filePath);
@@ -60,6 +63,8 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task DeleteAsync(string filePath)
 		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
 			if (File.Exists(filePath))
 			{
 				File.Delete(filePath);
@@ -71,6 +76,8 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task OpenFileAsync(string filePath, long fileSize)
 		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
 			Log.DebugFormat("Creating file '{0}'...", filePath);
 
 			DeleteAsync(filePath);
@@ -88,6 +95,8 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task WriteAsync(string filePath, long position, byte[] buffer)
 		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
 			Log.DebugFormat("Writing to '{0}': @{1}, {2} bytes...", filePath, position, buffer.Length);
 
 			if (!_files.TryGetValue(filePath, out var stream))
@@ -103,6 +112,8 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task CloseFileAsync(string filePath)
 		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
 			Log.DebugFormat("Closing '{0}'...", filePath);
 
 			if (_files.TryGetValue(filePath, out var stream))
@@ -117,11 +128,15 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public byte[] CalculateSha256(string filePath)
 		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
 			return HashCodeCalculator.Sha256(filePath);
 		}
 
 		public byte[] CalculateMD5(string filePath)
 		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
 			return HashCodeCalculator.MD5(filePath);
 		}
 
@@ -137,14 +152,16 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		private void CopyFile(CopyFile file)
 		{
-			if (File.Exists(file.FileName))
-				File.Delete(file.FileName);
+			var filePath = Paths.NormalizeAndEvaluate(file.FilePath);
 
-			var directory = Path.GetDirectoryName(file.FileName);
+			if (File.Exists(filePath))
+				File.Delete(filePath);
+
+			var directory = Path.GetDirectoryName(filePath);
 			if (!Directory.Exists(directory))
 				Directory.CreateDirectory(directory);
 
-			File.WriteAllBytes(file.FileName, file.Content);
+			File.WriteAllBytes(filePath, file.Content);
 		}
 
 		#endregion

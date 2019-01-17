@@ -4,7 +4,7 @@ using System.Net;
 using DPloy.Core.PublicApi;
 using SharpRemote.ServiceDiscovery;
 
-namespace DPloy
+namespace DPloy.Distributor
 {
 	public sealed class Distributor
 		: IDistributor

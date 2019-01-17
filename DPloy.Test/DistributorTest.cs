@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace DPloy.Test
 {
 	[TestFixture]
-	public sealed class DPloyAcceptanceTest
+	public sealed class DistributorTest
 	{
 		private static string GetTestTempDirectory()
 		{
@@ -28,6 +28,20 @@ namespace DPloy.Test
 		}
 
 		[Test]
+		public void TestExecuteCommand()
+		{
+			using (var node = new Node.NodeServer())
+			using (var deployer = new Distributor.Distributor())
+			{
+				var ep = node.Bind(IPAddress.Loopback);
+				using (var client = deployer.ConnectTo(ep))
+				{
+					client.ExecuteCommand("EXIT 101").Should().Be(101);
+				}
+			}
+		}
+
+		[Test]
 		public void TestCopyFile1byte_a()
 		{
 			TestCopyFile("1byte_a.txt");
@@ -43,7 +57,7 @@ namespace DPloy.Test
 		public void TestCopySeveralFiles()
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor())
+			using (var deployer = new Distributor.Distributor())
 			{
 				var ep = node.Bind(IPAddress.Loopback);
 				using (var client = deployer.ConnectTo(ep))
@@ -67,7 +81,7 @@ namespace DPloy.Test
 		private void TestCopyFile(string fileName)
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor())
+			using (var deployer = new Distributor.Distributor())
 			{
 				var ep = node.Bind(IPAddress.Loopback);
 				using (var client = deployer.ConnectTo(ep))

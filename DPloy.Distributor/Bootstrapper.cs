@@ -1,57 +1,54 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Text;
+using CommandLine;
 using DPloy.Core;
-using log4net;
-using log4net.Appender;
-using log4net.Core;
-using log4net.Layout;
-using log4net.Repository.Hierarchy;
 
-namespace DPloy
+namespace DPloy.Distributor
 {
 	static class Bootstrapper
 	{
-		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
 		static int Main(string[] args)
 		{
 			try
 			{
 				Log4Net.Setup(Constants.Distributor, args);
 
-				Application.Run();
-				return 0;
+				int exitCode = 0;
+				Parser.Default.ParseArguments<CommandLineOptions>(args)
+				      .WithParsed(options =>
+				      {
+					      exitCode = Run(options);
+				      });
+
+				return exitCode;
 			}
 			catch (Exception e)
 			{
 				Console.WriteLine("Terminating due to unexpected exception:");
 				Console.WriteLine(e);
-				return -1;
+				return -2;
 			}
 		}
 
-		private static void RegisterConsoleAppender()
+		private static int Run(CommandLineOptions options)
 		{
-			var hierarchy = (Hierarchy) LogManager.GetRepository();
-
-			var patternLayout = new PatternLayout
+			try
 			{
-				ConversionPattern = "%date %-5level - %message%newline"
-			};
-			patternLayout.ActivateOptions();
-
-			var consoleAppender = new ConsoleAppender
+				Application.Run(options);
+				return 0;
+			}
+			catch (Exception e)
 			{
-				Layout = patternLayout
-			};
-			consoleAppender.ActivateOptions();
-			hierarchy.Root.AddAppender(consoleAppender);
+				if (options.Verbose)
+				{
+					Console.WriteLine("Error:\r\n{0}", e);
+				}
+				else
+				{
+					Console.WriteLine("Error: {0}", e.Message);
+				}
 
-			hierarchy.Root.Level = Level.Info;
-			hierarchy.Configured = true;
+				return -1;
+			}
 		}
 	}
 }
