@@ -17,41 +17,60 @@ namespace DPloy.Test
 			using (var node = new NodeServer())
 			{
 				node.Bind(new IPEndPoint(IPAddress.Loopback, 48121));
-				Execute("Copy1byte_a.cs").Should().Be(0);
+				ExecuteScript("Copy1byte_a.cs").Should().Be(0);
 			}
 		}
 
 		[Test]
 		public void TestForwardArguments([Values(1, 2, 3, int.MaxValue)] int argument)
 		{
-			Execute("ParseArgument.cs", new[]{argument.ToString()}).Should().Be(argument);
+			ExecuteScript("ParseArgument.cs", new[]{argument.ToString()}).Should().Be(argument);
 		}
 
 		[Test]
 		public void TestReturnValue()
 		{
-			Execute("Returns1337.cs").Should().Be(1337);
+			ExecuteScript("Returns1337.cs").Should().Be(1337);
 		}
 
 		[Test]
 		public void TestStaticMain()
 		{
-			Execute("StaticMainReturns9001.cs").Should().Be(9001);
+			ExecuteScript("StaticMainReturns9001.cs").Should().Be(9001);
 		}
 
 		[Test]
 		public void TestPrivateMain()
 		{
-			Execute("PrivateMainReturns42.cs").Should().Be(42);
+			ExecuteScript("PrivateMainReturns42.cs").Should().Be(42);
 		}
 
 		[Test]
 		public void TestPrivateStaticMain()
 		{
-			Execute("PrivateStaticMainReturns101.cs").Should().Be(101);
+			ExecuteScript("PrivateStaticMainReturns101.cs").Should().Be(101);
 		}
 
-		private int Execute(string scriptFilePath, string[] args = null)
+		[Test]
+		public void TestInvalidScriptPath()
+		{
+			ExecuteScript("DoesNotExist.cs").Should().Be((int)Distributor.ExitCode.ScriptCannotBeAccessed);
+		}
+
+		[Test]
+		public void TestScriptPathTooLong()
+		{
+			var path = "jiodawhoiwaohwadhohwahiahpihphipafwihafwawfppjodwmöwadmdwadwjhfwhioqfwhfwqdslkjlkajlkajldkajdkdjawadjwadlkjdawkldwjlkadwjlwdkajdwalkdwjaldwajlkwadjdwalkjdlwadjknmncmjfhuehhfldhfjhfjshooieoqweuoqwzeirjmpdjpfhqihrpqpqwojoqrjoei0fonfkmkrügkoüjkogrjwjworjwpwkwükwoküküwküw";
+			ExecuteScript(path).Should().Be((int)Distributor.ExitCode.ScriptCannotBeAccessed);
+		}
+
+		[Test]
+		public void TestInvalidArguments()
+		{
+			Execute("dwadwawdaw").Should().Be((int)Distributor.ExitCode.InvalidArguments);
+		}
+
+		private int ExecuteScript(string scriptFilePath, string[] args = null)
 		{
 			var fullScriptPath = Path.Combine(AssemblySetup.ScriptsDirectory, scriptFilePath);
 
@@ -68,12 +87,17 @@ namespace DPloy.Test
 				}
 			}
 
+			return Execute(arguments.ToString());
+		}
+
+		private static int Execute(string arguments)
+		{
 			var executablePath = Path.Combine(AssemblySetup.AssemblyDirectory, "Distributor.exe");
 			var process = new Process
 			{
 				StartInfo = new ProcessStartInfo(executablePath)
 				{
-					Arguments = arguments.ToString(),
+					Arguments = arguments,
 					WorkingDirectory = AssemblySetup.TestProjectDirectory,
 
 					CreateNoWindow = true,

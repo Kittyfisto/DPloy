@@ -98,7 +98,10 @@
     <Compile Include="DeployOptions.cs" />
     <Compile Include="ExampleOptions.cs" />
     <EmbeddedResource Include="Examples\HelloWorld.cs" />
-    <Compile Include="ScriptExecutionException.cs" />
+    <Compile Include="Exceptions\ScriptCompilationException.cs" />
+    <Compile Include="Exceptions\ScriptExecutionException.cs" />
+    <Compile Include="Exceptions\ScriptCannotBeAccessedException.cs" />
+    <Compile Include="ExitCode.cs" />
     <Compile Include="NodeClient.cs" />
     <Compile Include="Distributor.cs" />
     <Compile Include="ScriptRunner.cs" />

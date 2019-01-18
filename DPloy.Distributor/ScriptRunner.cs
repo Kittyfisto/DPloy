@@ -1,9 +1,12 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using csscript;
 using CSScriptLibrary;
 using DPloy.Core.PublicApi;
+using DPloy.Distributor.Exceptions;
 using log4net;
 
 namespace DPloy.Distributor
@@ -24,7 +27,7 @@ namespace DPloy.Distributor
 
 				var exitCode = RunMain(script, distributor, scriptArguments);
 
-				Log.InfoFormat("Done!");
+				Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
 
 				return exitCode;
 			}
@@ -84,7 +87,18 @@ namespace DPloy.Distributor
 			else
 				args = new object[] {distributor};
 
-			return main.Invoke(obj, args);
+			try
+			{
+				return main.Invoke(obj, args);
+			}
+			catch (TargetInvocationException e)
+			{
+				var inner = e.InnerException;
+				if (inner != null)
+					throw new ScriptExecutionException(inner.Message, inner);
+
+				throw;
+			}
 		}
 
 		private static object CompileScript(string scriptFilePath)
@@ -94,8 +108,16 @@ namespace DPloy.Distributor
 			var script = File.ReadAllText(scriptFilePath);
 			var evaluator = CSScript.Evaluator;
 			evaluator.ReferenceAssembly(typeof(IDistributor).Assembly);
-			var tmp = evaluator.LoadCode(script);
-			return tmp;
+
+			try
+			{
+				var tmp = evaluator.LoadCode(script);
+				return tmp;
+			}
+			catch (CompilerException e)
+			{
+				throw new ScriptCompilationException(e);
+			}
 		}
 	}
 }

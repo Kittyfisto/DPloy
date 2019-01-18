@@ -1,18 +1,16 @@
 ﻿using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using csscript;
 using CommandLine;
 using DPloy.Core;
+using DPloy.Distributor.Exceptions;
 
 namespace DPloy.Distributor
 {
-	static class Bootstrapper
+	internal static class Bootstrapper
 	{
-		static int Main(string[] args)
+		private static int Main(string[] args)
 		{
 			try
 			{
@@ -21,9 +19,8 @@ namespace DPloy.Distributor
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("Terminating due to unexpected exception:");
-				Console.WriteLine(e);
-				return -2;
+				PrintUnhandledException(e);
+				return (int) ExitCode.UnhandledException;
 			}
 		}
 
@@ -32,17 +29,17 @@ namespace DPloy.Distributor
 			Log4Net.Setup(Constants.Distributor, args);
 
 			return Parser.Default.ParseArguments<DeployOptions, ExampleOptions>(args)
-				.MapResult(
-					(DeployOptions options) => RunDeployment(options),
-					(ExampleOptions options) => ShowExample(options),
-					errs => 1);
+			             .MapResult(
+			                        (DeployOptions options) => (int) RunDeployment(options),
+			                        (ExampleOptions options) => ShowExample(options),
+			                        errs => (int) ExitCode.InvalidArguments);
 		}
 
 		private static int ShowExample(ExampleOptions options)
 		{
 			var assembly = Assembly.GetExecutingAssembly();
 			var exampleScriptName = assembly.GetManifestResourceNames()
-				.First(x => x.Contains("HelloWorld.cs"));
+			                                .First(x => x.Contains("HelloWorld.cs"));
 			using (var stream = assembly.GetManifestResourceStream(exampleScriptName))
 			using (var reader = new StreamReader(stream))
 			{
@@ -50,53 +47,64 @@ namespace DPloy.Distributor
 				Console.WriteLine(exampleScript);
 			}
 
-			return 0;
+			return (int) ExitCode.Success;
 		}
 
-		private static int RunDeployment(DeployOptions options)
+		private static ExitCode RunDeployment(DeployOptions options)
 		{
-			var scriptPath = Paths.NormalizeAndEvaluate(options.Script);
+			string scriptPath;
+			try
+			{
+				scriptPath = Paths.NormalizeAndEvaluate(options.Script);
+			}
+			catch (IOException e)
+			{
+				Console.WriteLine("Error: {0}", e.Message);
+				return ExitCode.ScriptCannotBeAccessed;
+			}
+
 			var arguments = options.ScriptArguments.ToArray();
 			try
 			{
-				return ScriptRunner.Run(scriptPath, arguments);
+				return (ExitCode) ScriptRunner.Run(scriptPath, arguments);
 			}
-			catch (CompilerException e)
+			catch (ScriptCannotBeAccessedException e)
 			{
-				var errors = (List<string>)e.Data["Errors"];
-				foreach (string err in errors)
-				{
-					Console.WriteLine("{0}, {1}", scriptPath, err);
-				}
-				var warnings = (List<string>)e.Data["Warnings"];
-				foreach (string warning in warnings)
-				{
-					Console.WriteLine("{0}, {1}", scriptPath, warning);
-				}
-				return -1;
+				Console.WriteLine("Error: {0}", e.Message);
+				return ExitCode.ScriptCannotBeAccessed;
 			}
-			catch (TargetInvocationException e)
+			catch (ScriptCompilationException e)
 			{
-				PrintException(options, e.InnerException);
-				return -1;
+				Console.WriteLine("Build failed:");
+
+				foreach (var err in e.Errors) Console.WriteLine("{0}, {1}", scriptPath, err);
+				foreach (var warning in e.Warnings) Console.WriteLine("{0}, {1}", scriptPath, warning);
+				return ExitCode.CompileError;
+			}
+			catch (ScriptExecutionException e)
+			{
+				PrintException(options, e);
+				return ExitCode.ExecutionError;
 			}
 			catch (Exception e)
 			{
-				PrintException(options, e);
-				return -1;
+				PrintUnhandledException(e);
+				return ExitCode.UnhandledException;
 			}
+		}
+
+		private static void PrintUnhandledException(Exception e)
+		{
+			Console.WriteLine("Terminating due to unexpected exception:");
+			Console.WriteLine(e);
 		}
 
 		private static void PrintException(DeployOptions options, Exception e)
 		{
 			if (options.Verbose)
-			{
 				Console.WriteLine("Error:\r\n{0}", e);
-			}
 			else
-			{
 				Console.WriteLine("Error: {0}", e.Message);
-			}
 		}
 	}
 }
