@@ -126,15 +126,15 @@ namespace DPloy.Distributor
 			var destinationArchiveFolder = @"%temp%";
 			CopyFile(sourceArchivePath, destinationArchiveFolder);
 
-			UnzipArchive(sourceArchivePath, destinationFolder, destinationArchiveFolder);
+			UnzipArchive(sourceArchivePath, destinationFolder, destinationArchiveFolder, overwrite: true);
 		}
 
-		private void UnzipArchive(string sourceArchivePath, string destinationFolder, string tmpFolder)
+		private void UnzipArchive(string sourceArchivePath, string destinationFolder, string tmpFolder, bool overwrite)
 		{
 			Log.InfoFormat("Unzipping '{0}' into '{1}'", sourceArchivePath, destinationFolder);
 
 			var destinationArchivePath = Path.Combine(tmpFolder, Path.GetFileName(sourceArchivePath));
-			_files.Unzip(destinationArchivePath, destinationFolder);
+			_files.Unzip(destinationArchivePath, destinationFolder, overwrite);
 		}
 
 		public void Install(string installerPath, string commandLine = null)

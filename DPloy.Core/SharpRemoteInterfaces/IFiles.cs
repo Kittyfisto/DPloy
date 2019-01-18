@@ -26,7 +26,7 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		/// <param name="filePath"></param>
 		/// <returns></returns>
 		[Invoke(Dispatch.SerializePerObject)]
-		Task DeleteAsync(string filePath);
+		Task DeleteFileAsync(string filePath);
 
 		/// <summary>
 		///     Opens the given file for writing.
@@ -89,7 +89,8 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		/// </summary>
 		/// <param name="archivePath"></param>
 		/// <param name="destinationFolder"></param>
+		/// <param name="overwrite"></param>
 		[Invoke(Dispatch.SerializePerObject)]
-		void Unzip(string archivePath, string destinationFolder);
+		void Unzip(string archivePath, string destinationFolder, bool overwrite);
 	}
 }

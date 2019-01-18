@@ -105,7 +105,16 @@ namespace DPloy.Distributor
 		{
 			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
 
-			var script = File.ReadAllText(scriptFilePath);
+			string script;
+			try
+			{
+				script = File.ReadAllText(scriptFilePath);
+			}
+			catch (IOException e)
+			{
+				throw new ScriptCannotBeAccessedException(e.Message, e);
+			}
+
 			var evaluator = CSScript.Evaluator;
 			evaluator.ReferenceAssembly(typeof(IDistributor).Assembly);
 

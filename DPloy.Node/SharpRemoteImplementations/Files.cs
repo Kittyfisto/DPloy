@@ -62,16 +62,9 @@ namespace DPloy.Node.SharpRemoteImplementations
 			return true;
 		}
 
-		public Task DeleteAsync(string filePath)
+		public Task DeleteFileAsync(string filePath)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
-
-			if (File.Exists(filePath))
-			{
-				File.Delete(filePath);
-				Log.InfoFormat("Delete file '{0}'", filePath);
-			}
-
+			DeleteFile(filePath);
 			return Task.FromResult(42);
 		}
 
@@ -81,7 +74,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 			Log.DebugFormat("Creating file '{0}'...", filePath);
 
-			DeleteAsync(filePath);
+			DeleteFile(filePath);
 
 			var directoryPath = Path.GetDirectoryName(filePath);
 			CreateDirectoryIfNecessary(directoryPath);
@@ -151,12 +144,46 @@ namespace DPloy.Node.SharpRemoteImplementations
 			return Task.FromResult(42);
 		}
 
-		public void Unzip(string archivePath, string destinationFolder)
+		public void Unzip(string archivePath, string destinationFolder, bool overwrite)
 		{
 			var actualArchivePath = Paths.NormalizeAndEvaluate(archivePath);
 			var actualDestinationFolder = Paths.NormalizeAndEvaluate(destinationFolder);
 
-			ZipFile.ExtractToDirectory(actualArchivePath, actualDestinationFolder);
+			using (var archive = ZipFile.OpenRead(actualArchivePath))
+			{
+				foreach (var entry in archive.Entries)
+				{
+					using (var source = entry.Open())
+					{
+						var destinationFilePath = Path.Combine(actualDestinationFolder, entry.FullName);
+
+						if (overwrite)
+							DeleteFile(destinationFilePath);
+						else if (File.Exists(destinationFilePath))
+							throw new IOException($"The file '{destinationFilePath}' already exists");
+
+						var destinationPath = Path.GetDirectoryName(destinationFilePath);
+						CreateDirectoryIfNecessary(destinationPath);
+
+						using (var destination = File.OpenWrite(destinationFilePath))
+						{
+							source.CopyTo(destination);
+						}
+					}
+				}
+			}
+		}
+
+		private static void DeleteFile(string filePath)
+		{
+			filePath = Paths.NormalizeAndEvaluate(filePath);
+
+			if (File.Exists(filePath))
+			{
+				Log.DebugFormat("Deleting file '{0}'...", filePath);
+				File.Delete(filePath);
+				Log.InfoFormat("Deleted file '{0}'", filePath);
+			}
 		}
 
 		private void CopyFile(CopyFile file)
