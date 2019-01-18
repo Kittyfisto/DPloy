@@ -10,13 +10,13 @@ namespace DPloy.Node
 	/// </summary>
 	internal class Application
 	{
-		public static void Run()
+		public static int Run(CommandLineOptions options)
 		{
 			var machineName = Environment.MachineName;
 			var serviceName = $"{machineName}.DPloy.Node";
 
 			using (var discoverer = new NetworkServiceDiscoverer())
-			using (var node = new NodeServer(serviceName, discoverer))
+			using (var node = new NodeServer(serviceName, discoverer, options.AllowedHosts))
 			{
 				node.Bind(IPAddress.Any);
 
@@ -24,6 +24,8 @@ namespace DPloy.Node
 
 				WaitUntilExit();
 			}
+
+			return 0;
 		}
 
 		private static void WaitUntilExit()

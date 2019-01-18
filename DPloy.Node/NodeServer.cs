@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Reflection;
+using System.Text;
 using DPloy.Core;
 using DPloy.Core.SharpRemoteInterfaces;
 using DPloy.Node.SharpRemoteImplementations;
+using log4net;
 using SharpRemote;
 using SharpRemote.ServiceDiscovery;
 
@@ -21,25 +26,30 @@ namespace DPloy.Node
 	public sealed class NodeServer
 		: IDisposable
 	{
+		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
 		private readonly Files _files;
 		private readonly Services _services;
 		private readonly Shell _shell;
 		private readonly SocketEndPoint _socket;
 
 		public NodeServer()
-			: this(serviceName: null, networkServiceDiscoverer: null)
+			: this(null, null, new []{Environment.MachineName})
 		{
 		}
 
-		public NodeServer(string serviceName, INetworkServiceDiscoverer networkServiceDiscoverer)
+		public NodeServer(string serviceName, INetworkServiceDiscoverer networkServiceDiscoverer, IEnumerable<string> allowedMachineNames)
 		{
+			LogAllowedHosts(allowedMachineNames);
+
 			_socket = new SocketEndPoint(EndPointType.Server,
-			                             serviceName,
-			                             networkServiceDiscoverer: networkServiceDiscoverer,
-			                             heartbeatSettings: new HeartbeatSettings
-			                             {
-				                             AllowRemoteHeartbeatDisable = true
-			                             });
+				serviceName,
+				clientAuthenticator: MachineNameAuthenticator.CreateForServer(allowedMachineNames.ToArray()),
+				networkServiceDiscoverer: networkServiceDiscoverer,
+				heartbeatSettings: new HeartbeatSettings
+				{
+					AllowRemoteHeartbeatDisable = true
+				});
 			_socket.OnDisconnected += SocketOnOnDisconnected;
 
 			_files = new Files();
@@ -50,6 +60,15 @@ namespace DPloy.Node
 
 			_services = new Services();
 			_socket.CreateServant<IServices>(ObjectIds.Services, _services);
+		}
+
+		private void LogAllowedHosts(IEnumerable<string> allowedMachineNames)
+		{
+			var builder = new StringBuilder();
+			builder.AppendLine(
+				"The following list of hosts are allowed to remotely deploy software & execute commands:");
+			builder.Append(string.Join("\r\n", allowedMachineNames.Select(x => $"\t{x}")));
+			Log.Info(builder);
 		}
 
 		#region IDisposable

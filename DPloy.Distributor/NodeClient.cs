@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -52,7 +53,12 @@ namespace DPloy.Distributor
 
 		public static NodeClient Create(IPEndPoint endPoint)
 		{
-			var socket = new SocketEndPoint(EndPointType.Client, "Distributor");
+			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
+				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
+				heartbeatSettings: new HeartbeatSettings
+				{
+					AllowRemoteHeartbeatDisable = true
+				});
 			try
 			{
 				socket.Connect(endPoint);
@@ -68,7 +74,12 @@ namespace DPloy.Distributor
 		public static NodeClient Create(INetworkServiceDiscoverer discoverer, string computerName)
 		{
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
-				networkServiceDiscoverer: discoverer);
+				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
+				networkServiceDiscoverer: discoverer,
+				heartbeatSettings: new HeartbeatSettings
+				{
+					AllowRemoteHeartbeatDisable = true
+				});
 			try
 			{
 				var serviceName = $"{computerName}.DPloy.Node";
@@ -95,12 +106,35 @@ namespace DPloy.Distributor
 		private void CopyFilePrivate(string sourceFilePath, string destinationFolder)
 		{
 			var fileSize = new FileInfo(sourceFilePath).Length;
-			CopyFileChunked(sourceFilePath, destinationFolder, fileSize);
+			if (IsSmallFile(fileSize))
+			{
+				CopyFileBatch(destinationFolder, new[]{sourceFilePath});
+			}
+			else
+			{
+				CopyFileChunked(sourceFilePath, destinationFolder, fileSize);
+			}
 		}
 
 		public void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder)
 		{
 			CopyFilesPrivate(sourceFiles.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
+		}
+
+		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder)
+		{
+			var destinationArchiveFolder = @"%temp%";
+			CopyFile(sourceArchivePath, destinationArchiveFolder);
+
+			UnzipArchive(sourceArchivePath, destinationFolder, destinationArchiveFolder);
+		}
+
+		private void UnzipArchive(string sourceArchivePath, string destinationFolder, string tmpFolder)
+		{
+			Log.InfoFormat("Unzipping '{0}' into '{1}'", sourceArchivePath, destinationFolder);
+
+			var destinationArchivePath = Path.Combine(tmpFolder, Path.GetFileName(sourceArchivePath));
+			_files.Unzip(destinationArchivePath, destinationFolder);
 		}
 
 		public void Install(string installerPath, string commandLine = null)
@@ -193,9 +227,7 @@ namespace DPloy.Distributor
 		{
 			foreach (var fileName in sourceFiles)
 			{
-				var info = new FileInfo(fileName);
-				var size = info.Length;
-				if (size <= FilePacketBufferSize / 2)
+				if (IsSmallFile(new FileInfo(fileName).Length))
 				{
 					smallFiles.Add(fileName);
 				}
@@ -204,6 +236,12 @@ namespace DPloy.Distributor
 					bigFiles.Add(fileName);
 				}
 			}
+		}
+
+		[Pure]
+		private static bool IsSmallFile(long fileSize)
+		{
+			return fileSize <= FilePacketBufferSize / 2;
 		}
 
 		/// <summary>
@@ -262,7 +300,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private void CopyFileBatch(string destinationFolder, List<string> smallFiles)
+		private void CopyFileBatch(string destinationFolder, IReadOnlyList<string> smallFiles)
 		{
 			var tasks = new List<Task>();
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using CommandLine;
 using DPloy.Core;
 
 namespace DPloy.Node
@@ -23,8 +24,11 @@ namespace DPloy.Node
 		private static int Run(string[] args)
 		{
 			Log4Net.Setup(Constants.Node, args);
-			Application.Run();
-			return (int) ExitCode.Success;
+
+			return Parser.Default.ParseArguments<CommandLineOptions>(args)
+				.MapResult(
+					(CommandLineOptions options) => Application.Run(options),
+					errs => 1);
 		}
 
 		private static void PrintFatalException(Exception e)

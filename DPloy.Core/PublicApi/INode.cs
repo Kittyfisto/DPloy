@@ -17,7 +17,7 @@ namespace DPloy.Core.PublicApi
 		#region Filesystem
 
 		/// <summary>
-		///     Copies a single file to this node, blocks until the file has been fully transfered or an error occured.
+		///     Copies a single file to this node, blocks until the file has been fully transferred or an error occured.
 		/// </summary>
 		/// <remarks>
 		///     <paramref name="destinationFolder"/> can be absolute or it may start with a special folder such as:
@@ -33,6 +33,16 @@ namespace DPloy.Core.PublicApi
 		/// <param name="sourceFiles"></param>
 		/// <param name="destinationFolder"></param>
 		void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder);
+
+		/// <summary>
+		///     Copies the given archive to this node and unzips its contents into the given folder.
+		/// </summary>
+		/// <remarks>
+		///     Currently only zip files (*.zip) are supported.
+		/// </remarks>
+		/// <param name="sourceArchivePath"></param>
+		/// <param name="destinationFolder"></param>
+		void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder);
 
 		#endregion
 
@@ -53,9 +63,15 @@ namespace DPloy.Core.PublicApi
 		/// <summary>
 		/// Starts the given service, does nothing if the service is already running.
 		/// </summary>
+		/// <exception cref="ArgumentException">In case there is no service named <paramref name="serviceName"/></exception>
 		/// <param name="serviceName"></param>
 		void StartService(string serviceName);
 
+		/// <summary>
+		/// Stops the given service, does nothing if the service is already stopped.
+		/// </summary>
+		/// <exception cref="ArgumentException">In case there is no service named <paramref name="serviceName"/></exception>
+		/// <param name="serviceName"></param>
 		void StopService(string serviceName);
 
 		#endregion

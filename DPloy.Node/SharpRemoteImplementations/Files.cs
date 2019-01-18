@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Reflection;
 using System.Threading.Tasks;
 using DPloy.Core;
@@ -148,6 +149,14 @@ namespace DPloy.Node.SharpRemoteImplementations
 			}
 
 			return Task.FromResult(42);
+		}
+
+		public void Unzip(string archivePath, string destinationFolder)
+		{
+			var actualArchivePath = Paths.NormalizeAndEvaluate(archivePath);
+			var actualDestinationFolder = Paths.NormalizeAndEvaluate(destinationFolder);
+
+			ZipFile.ExtractToDirectory(actualArchivePath, actualDestinationFolder);
 		}
 
 		private void CopyFile(CopyFile file)

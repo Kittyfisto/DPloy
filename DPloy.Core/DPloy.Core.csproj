@@ -46,6 +46,7 @@
     <Compile Include="Constants.cs" />
     <Compile Include="Hash\HashCodeCalculator.cs" />
     <Compile Include="IApplicationConstants.cs" />
+    <Compile Include="MachineNameAuthenticator.cs" />
     <Compile Include="Paths.cs" />
     <Compile Include="PublicApi\IDistributor.cs" />
     <Compile Include="SharpRemoteInterfaces\CopyFile.cs" />

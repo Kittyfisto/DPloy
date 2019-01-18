@@ -55,6 +55,12 @@
     <Compile Include="FileTest.cs" />
     <Compile Include="PathsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="app.config" />
+    <None Include="Scripts\PrivateStaticMainReturns101.cs" />
+    <None Include="Scripts\PrivateMainReturns42.cs" />
+    <None Include="Scripts\StaticMainReturns9001.cs" />
+    <None Include="Scripts\ParseArgument.cs" />
+    <None Include="Scripts\Returns1337.cs" />
     <None Include="Scripts\Copy1byte_a.cs" />
   </ItemGroup>
   <ItemGroup>

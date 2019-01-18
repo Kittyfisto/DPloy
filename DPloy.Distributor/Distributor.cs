@@ -10,12 +10,11 @@ namespace DPloy.Distributor
 		: IDistributor
 		, IDisposable
 	{
-		private readonly NetworkServiceDiscoverer _discoverer;
+		private NetworkServiceDiscoverer _discoverer;
 		private readonly List<NodeClient> _clients;
 
 		public Distributor()
 		{
-			_discoverer = new NetworkServiceDiscoverer();
 			_clients = new List<NodeClient>();
 		}
 
@@ -37,6 +36,8 @@ namespace DPloy.Distributor
 
 		public INode ConnectTo(string computerName)
 		{
+			if (_discoverer == null)
+				_discoverer = new NetworkServiceDiscoverer();
 			return AddClient(() => NodeClient.Create(_discoverer, computerName));
 		}
 

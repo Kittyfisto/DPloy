@@ -83,5 +83,13 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		/// <param name="batch"></param>
 		[Invoke(Dispatch.SerializePerObject)]
 		Task ExecuteBatchAsync(FileBatch batch);
+
+		/// <summary>
+		///     Unzips the given zip archive into the given folder.
+		/// </summary>
+		/// <param name="archivePath"></param>
+		/// <param name="destinationFolder"></param>
+		[Invoke(Dispatch.SerializePerObject)]
+		void Unzip(string archivePath, string destinationFolder);
 	}
 }
