@@ -98,27 +98,32 @@ namespace DPloy.Distributor
 
 		#region Implementation of IClient
 
-		public void CopyFile(string sourceFilePath, string destinationFolder)
+		public void CopyFile(string sourceFilePath, string destinationFilePath)
 		{
-			CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFolder);
+			CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFilePath);
 		}
 
-		private void CopyFilePrivate(string sourceFilePath, string destinationFolder)
+		private void CopyFilePrivate(string sourceFilePath, string destinationFilePath)
 		{
 			var fileSize = new FileInfo(sourceFilePath).Length;
 			if (IsSmallFile(fileSize))
 			{
-				CopyFileBatch(destinationFolder, new[]{sourceFilePath});
+				CopyFileBatch(new[]{sourceFilePath}, new []{destinationFilePath});
 			}
 			else
 			{
-				CopyFileChunked(sourceFilePath, destinationFolder, fileSize);
+				CopyFileChunked(sourceFilePath, destinationFilePath, fileSize);
 			}
 		}
 
 		public void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder)
 		{
 			CopyFilesPrivate(sourceFiles.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
+		}
+
+		public void CopyDirectory(string sourceDirectoryPath, string destinationPath)
+		{
+			throw new NotImplementedException();
 		}
 
 		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder)
@@ -193,7 +198,9 @@ namespace DPloy.Distributor
 				CopyFile(bigFile, destinationFolder);
 			}
 
-			CopyFileBatch(destinationFolder, smallFiles);
+			var destinationFilePaths =
+				smallFiles.Select(x => Path.Combine(destinationFolder, Path.GetFileName(x))).ToList();
+			CopyFileBatch(smallFiles, destinationFilePaths);
 		}
 
 		private bool Exists(string destinationFilePath, long expectedFileSize, byte[] expectedHash)
@@ -254,20 +261,19 @@ namespace DPloy.Distributor
 		///    is identical), then nothing more is done.
 		/// </remarks>
 		/// <param name="sourceFilePath"></param>
-		/// <param name="destinationFolder"></param>
+		/// <param name="destinationFilePath"></param>
 		/// <param name="expectedFileSize"></param>
-		private void CopyFileChunked(string sourceFilePath, string destinationFolder, long expectedFileSize)
+		private void CopyFileChunked(string sourceFilePath, string destinationFilePath, long expectedFileSize)
 		{
-			var destinationFilePath = Path.Combine(destinationFolder, Path.GetFileName(sourceFilePath));
 			var thisHash = HashCodeCalculator.MD5(sourceFilePath);
 			if (Exists(destinationFilePath, expectedFileSize, thisHash))
 			{
 				Log.InfoFormat("Skipping copy of '{0}' to '{1}' because the target file is already present", sourceFilePath,
-				               destinationFolder);
+				               destinationFilePath);
 				return;
 			}
 
-			Log.InfoFormat("Copying '{0}' to '{1}'...", sourceFilePath, destinationFolder);
+			Log.InfoFormat("Copying '{0}' to '{1}'...", sourceFilePath, destinationFilePath);
 
 			using (var sourceStream = File.OpenRead(sourceFilePath))
 			{
@@ -300,18 +306,23 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private void CopyFileBatch(string destinationFolder, IReadOnlyList<string> smallFiles)
+		private void CopyFileBatch(IReadOnlyList<string> sourceFilePaths, IReadOnlyList<string> destinationFilePaths)
 		{
 			var tasks = new List<Task>();
 
 			var batch = new FileBatch();
 			long length = 0;
-			foreach (var fileName in smallFiles)
+			for(int i = 0; i < sourceFilePaths.Count; ++i)
 			{
+				var sourceFilePath = sourceFilePaths[i];
+				var destinationFilePath = destinationFilePaths[i];
+
+				Log.InfoFormat("Copying '{0}' to '{1}'...", sourceFilePath, destinationFilePath);
+
 				var instruction = new CopyFile
 				{
-					FilePath = Path.Combine(destinationFolder, Path.GetFileName(fileName)),
-					Content = File.ReadAllBytes(fileName)
+					FilePath = destinationFilePath,
+					Content = File.ReadAllBytes(sourceFilePath)
 				};
 				batch.FilesToCopy.Add(instruction);
 				length += instruction.Content.Length;

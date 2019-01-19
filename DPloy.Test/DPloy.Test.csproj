@@ -53,7 +53,7 @@
   <ItemGroup>
     <Compile Include="AssemblySetup.cs" />
     <Compile Include="DistributorAcceptanceTest.cs" />
-    <Compile Include="DistributorTest.cs" />
+    <Compile Include="NodeAcceptanceTest.cs" />
     <Compile Include="FileTest.cs" />
     <Compile Include="PathsTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

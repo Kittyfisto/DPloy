@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace DPloy.Test
 {
 	[TestFixture]
-	public sealed class DistributorTest
+	public sealed class NodeAcceptanceTest
 	{
 		private static string GetTestTempDirectory()
 		{
@@ -87,11 +87,10 @@ namespace DPloy.Test
 				using (var client = deployer.ConnectTo(ep))
 				{
 					var sourceFilePath = Path.Combine("TestData", fileName);
-					var destinationPath = GetTestTempDirectory();
-					var destinationFilePath = Path.Combine(destinationPath, destinationPath, fileName);
+					var destinationFilePath = Path.Combine(GetTestTempDirectory(), fileName);
 
 					File.Exists(destinationFilePath).Should().BeFalse();
-					client.CopyFile(sourceFilePath, destinationPath);
+					client.CopyFile(sourceFilePath, destinationFilePath);
 
 					File.Exists(destinationFilePath).Should().BeTrue();
 					AreEqual(sourceFilePath, destinationFilePath).Should().BeTrue();

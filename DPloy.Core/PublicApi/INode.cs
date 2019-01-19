@@ -33,18 +33,22 @@ namespace DPloy.Core.PublicApi
 		///     Copies a single file to this node, blocks until the file has been fully transferred or an error occured.
 		/// </summary>
 		/// <remarks>
-		///     <paramref name="destinationFolder" /> can be absolute or it may start with a special folder such as:
+		///     <paramref name="destinationFilePath" /> can be absolute or it may start with a special folder such as:
 		///     %temp%, %localappdata%, etc...
 		/// </remarks>
 		/// <remarks>
 		///     If a file with that name already exists on the target system then it will be overwritten.
 		/// </remarks>
-		/// <param name="sourceFilePath"></param>
-		/// <param name="destinationFolder"></param>
-		void CopyFile(string sourceFilePath, string destinationFolder);
+		/// <example>
+		///     <paramref name="sourceFilePath"/>: %downloads%\Foo.txt
+		///     <paramref name="destinationFilePath"/>: %downloads%\Bar.txt
+		/// </example>
+		/// <param name="sourceFilePath">The file path (relative or absolute) of the file which shall be copied</param>
+		/// <param name="destinationFilePath"></param>
+		void CopyFile(string sourceFilePath, string destinationFilePath);
 
 		/// <summary>
-		///     Copies the given files into the given folder.
+		///     Copies the given files *flat* into the given folder.
 		/// </summary>
 		/// <remarks>
 		///     If a file with any of the given names already exists on the target system then it will be overwritten.
@@ -52,6 +56,23 @@ namespace DPloy.Core.PublicApi
 		/// <param name="sourceFiles"></param>
 		/// <param name="destinationFolder"></param>
 		void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder);
+
+		/// <summary>
+		///     Copies a directory and all of its files (but not its sub-directories) to the given
+		///     destination folder. The name of the source directory need not be included in the latter.
+		/// </summary>
+		/// <remarks>
+		///     Any file already existing at the destination will be overwritten, if need be.
+		/// </remarks>
+		/// <example>
+		///     <paramref name="sourceDirectoryPath" /> is set to C:\MyAwesomeDirectory
+		///     <paramref name="destinationPath" /> is set to %desktop%
+		///     This method will create a directory named MyAwesomeDirectory on the node's desktop
+		///     and place the contents of C:\MyAwesomeDirectory there.
+		/// </example>
+		/// <param name="sourceDirectoryPath">The path to the source directory which shall be copied</param>
+		/// <param name="destinationPath">The path on this node where the source directory shall be placed</param>
+		void CopyDirectory(string sourceDirectoryPath, string destinationPath);
 
 		/// <summary>
 		///     Copies the given archive to this node and unzips its contents into the given folder.
