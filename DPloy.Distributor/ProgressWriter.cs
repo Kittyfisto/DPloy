@@ -9,74 +9,85 @@ namespace DPloy.Distributor
 	/// </summary>
 	internal sealed class ProgressWriter
 	{
-		private readonly bool _verbose;
 		private const string CutIndicator = "[...]";
 
+		/// <summary>
+		///     Indentation used for operations running on a particular node.
+		/// </summary>
+		private const string NodeOperationIndent = "  ";
+
 		private readonly int _maxStatusWidth;
-		private readonly int _maxOperationWidth;
+		private readonly bool _verbose;
 
 		public ProgressWriter(bool verbose)
 		{
 			_verbose = verbose;
 			_maxStatusWidth = Math.Max(Operation.Ok.Length, Operation.Error.Length);
+		}
 
-			try
+		private int MaxLineLength
+		{
+			get
 			{
-				_maxOperationWidth = Console.WindowWidth - _maxStatusWidth - 1;
-			}
-			catch (Exception)
-			{
-				// Console.WidthWidth fails in unit test scenarios
-				_maxOperationWidth = 120 - _maxStatusWidth;
+				try
+				{
+					return Console.WindowWidth - _maxStatusWidth - 1;
+				}
+				catch (Exception)
+				{
+					// Console.WidthWidth fails in unit test scenarios
+					return 120 - _maxStatusWidth;
+				}
 			}
 		}
 
 		public Operation BeginLoadScript(string scriptFilePath)
 		{
 			var template = "Loading script '{0}'";
-			var remaminingLength = _maxOperationWidth - template.Length + 3;
+			var maxLineLength = MaxLineLength;
+			var remaminingLength = maxLineLength - template.Length + 3;
 			var pruntedScriptFilePath = PrunePath(scriptFilePath, remaminingLength);
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedScriptFilePath);
-			FillIfNecessary(message);
-			return new Operation(message.ToString(), _verbose);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
 		public Operation BeginCompileScript(string scriptFilePath)
 		{
 			var template = "Compiling script '{0}'";
-			var remaminingLength = _maxOperationWidth - template.Length + 3;
+			var maxLineLength = MaxLineLength;
+			var remaminingLength = maxLineLength - template.Length + 3;
 			var pruntedScriptFilePath = PrunePath(scriptFilePath, remaminingLength);
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedScriptFilePath);
-			FillIfNecessary(message);
-			return new Operation(message.ToString(), _verbose);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
 		public Operation BeginConnect(string destination)
 		{
-			var template = "Connecting to '{0}'S";
+			var template = "Connecting to '{0}'";
+			var maxLineLength = MaxLineLength;
 			var message = new StringBuilder();
 			message.AppendFormat(template, destination);
-			FillIfNecessary(message);
-			return new Operation(message.ToString(), _verbose);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
 		public Operation BeginDisconnect(IPEndPoint remoteEndPoint)
 		{
 			var template = "Disconnecting from '{0}'";
+			var maxLineLength = MaxLineLength;
 			var message = new StringBuilder();
 			message.AppendFormat(template, remoteEndPoint);
-			FillIfNecessary(message);
-			return new Operation(message.ToString(), _verbose);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
 		public Operation BeginCopyFile(string sourcePath, string destinationPath)
 		{
-			var template = "Copying '{0}' to '{1}'";
-			var remamining = _maxOperationWidth - template.Length + 2 * 3;
+			var template = NodeOperationIndent + "Copying '{0}' to '{1}'";
+			var maxLineLength = MaxLineLength;
+			var remamining = maxLineLength - template.Length + 2 * 3;
 
 			PruneTwoPaths(sourcePath, destinationPath, remamining,
 			              out var prunedSourcePath,
@@ -84,27 +95,27 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedSourcePath, pruntedDestinationPath);
-			FillIfNecessary(message);
-			return new Operation(message.ToString(), _verbose);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
 		public Operation BeginCopyFiles(IReadOnlyList<string> sourceFiles, string destinationFolder)
 		{
-			var template = $"Copying {sourceFiles.Count} files to " + "'{0}'";
-			var remamining = _maxOperationWidth - template.Length + 2 * 3;
+			var template = NodeOperationIndent + $"Copying {sourceFiles.Count} files to " + "'{0}'";
+			var maxLineLength = MaxLineLength;
+			var remamining = maxLineLength - template.Length + 2 * 3;
 
 			var pruntedDestinationPath = PrunePath(destinationFolder, remamining);
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedDestinationPath);
-			FillIfNecessary(message);
-			return new Operation(message.ToString(), _verbose);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
 		public Operation BeginCopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
 		{
-			var template = "Copying directory '{0}' to '{1}'";
-			var remamining = _maxOperationWidth - template.Length + 2 * 3;
+			var template = NodeOperationIndent + "Copying directory '{0}' to '{1}'";
+			var maxLineLength = MaxLineLength;
+			var remamining = MaxLineLength - template.Length + 2 * 3;
 
 			PruneTwoPaths(sourceDirectoryPath, destinationDirectoryPath, remamining,
 			              out var prunedSourcePath,
@@ -112,21 +123,14 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedSourcePath, pruntedDestinationPath);
-			FillIfNecessary(message);
-			return new Operation(message.ToString(), _verbose);
-		}
-
-		private void FillIfNecessary(StringBuilder message)
-		{
-			if (message.Length < _maxOperationWidth)
-				message.Append(value: ' ', repeatCount: _maxOperationWidth - message.Length);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
 		private static void PruneTwoPaths(string path1,
-		                           string path2,
-		                           int maxWidth,
-		                           out string prunedPath1,
-		                           out string prunedPath2)
+		                                  string path2,
+		                                  int maxWidth,
+		                                  out string prunedPath1,
+		                                  out string prunedPath2)
 		{
 			if (path1.Length + path2.Length <= maxWidth)
 			{
