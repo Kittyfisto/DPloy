@@ -95,6 +95,8 @@
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="Operation.cs" />
+    <Compile Include="ProgressWriter.cs" />
     <Compile Include="DeployOptions.cs" />
     <Compile Include="ExampleOptions.cs" />
     <EmbeddedResource Include="Examples\HelloWorld.cs" />

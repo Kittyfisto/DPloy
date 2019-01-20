@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Net;
+using DPloy.Distributor;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -31,7 +32,7 @@ namespace DPloy.Test
 		public void TestExecuteCommand()
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor.Distributor())
+			using (var deployer = new Distributor.Distributor(new ProgressWriter(true)))
 			{
 				var ep = node.Bind(IPAddress.Loopback);
 				using (var client = deployer.ConnectTo(ep))
@@ -57,7 +58,7 @@ namespace DPloy.Test
 		public void TestCopySeveralFiles()
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor.Distributor())
+			using (var deployer = new Distributor.Distributor(new ProgressWriter(true)))
 			{
 				var ep = node.Bind(IPAddress.Loopback);
 				using (var client = deployer.ConnectTo(ep))
@@ -81,7 +82,7 @@ namespace DPloy.Test
 		private void TestCopyFile(string fileName)
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor.Distributor())
+			using (var deployer = new Distributor.Distributor(new ProgressWriter(true)))
 			{
 				var ep = node.Bind(IPAddress.Loopback);
 				using (var client = deployer.ConnectTo(ep))

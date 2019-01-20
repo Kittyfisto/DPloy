@@ -66,13 +66,13 @@ namespace DPloy.Core.PublicApi
 		/// </remarks>
 		/// <example>
 		///     <paramref name="sourceDirectoryPath" /> is set to C:\MyAwesomeDirectory
-		///     <paramref name="destinationPath" /> is set to %desktop%
-		///     This method will create a directory named MyAwesomeDirectory on the node's desktop
+		///     <paramref name="destinationDirectoryPath" /> is set to %desktop%\MyNewAwesomeDirectory
+		///     This method will create a directory named MyNewAwesomeDirectory on the node's desktop
 		///     and place the contents of C:\MyAwesomeDirectory there.
 		/// </example>
 		/// <param name="sourceDirectoryPath">The path to the source directory which shall be copied</param>
-		/// <param name="destinationPath">The path on this node where the source directory shall be placed</param>
-		void CopyDirectory(string sourceDirectoryPath, string destinationPath);
+		/// <param name="destinationDirectoryPath">The path on this node where the source directory shall be placed</param>
+		void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath);
 
 		/// <summary>
 		///     Copies the given archive to this node and unzips its contents into the given folder.

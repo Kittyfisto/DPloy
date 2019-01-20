@@ -18,10 +18,10 @@ namespace DPloy.Distributor
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-		public static int Run(string scriptFilePath, string[] scriptArguments)
+		public static int Run(ProgressWriter progressWriter, string scriptFilePath, string[] scriptArguments)
 		{
-			var script = CompileScript(scriptFilePath);
-			using (var distributor = new Distributor())
+			var script = LoadAndCompileScript(progressWriter, scriptFilePath);
+			using (var distributor = new Distributor(progressWriter))
 			{
 				Log.InfoFormat("Executing '{0}'...", scriptFilePath);
 
@@ -101,31 +101,54 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static object CompileScript(string scriptFilePath)
+		private static object LoadAndCompileScript(ProgressWriter progressWriter, string scriptFilePath)
+		{
+			var script = LoadScript(progressWriter, scriptFilePath);
+			return CompileScript(progressWriter, scriptFilePath, script);
+		}
+
+		private static string LoadScript(ProgressWriter progressWriter, string scriptFilePath)
 		{
 			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
+
+			var operation = progressWriter.BeginLoadScript(scriptFilePath);
 
 			string script;
 			try
 			{
 				script = File.ReadAllText(scriptFilePath);
+				operation.Success();
 			}
 			catch (IOException e)
 			{
-				throw new ScriptCannotBeAccessedException(e.Message, e);
+				var tmp = new ScriptCannotBeAccessedException(e.Message, e);
+				operation.Failed(tmp);
+				throw tmp;
 			}
+
+			return script;
+		}
+
+		private static object CompileScript(ProgressWriter progressWriter, string scriptFilePath, string script)
+		{
+			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
 
 			var evaluator = CSScript.Evaluator;
 			evaluator.ReferenceAssembly(typeof(IDistributor).Assembly);
 
+			var operation = progressWriter.BeginCompileScript(scriptFilePath);
+
 			try
 			{
 				var tmp = evaluator.LoadCode(script);
+				operation.Success();
 				return tmp;
 			}
 			catch (CompilerException e)
 			{
-				throw new ScriptCompilationException(e);
+				var tmp = new ScriptCompilationException(e);
+				operation.Failed(e);
+				throw tmp;
 			}
 		}
 	}

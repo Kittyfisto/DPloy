@@ -66,15 +66,18 @@ namespace DPloy.Distributor
 			var arguments = options.ScriptArguments.ToArray();
 			try
 			{
-				return (ExitCode) ScriptRunner.Run(scriptPath, arguments);
+				var progressWriter = new ProgressWriter(options.Verbose);
+				return (ExitCode) ScriptRunner.Run(progressWriter, scriptPath, arguments);
 			}
 			catch (ScriptCannotBeAccessedException e)
 			{
+				Console.WriteLine();
 				Console.WriteLine("Error: {0}", e.Message);
 				return ExitCode.ScriptCannotBeAccessed;
 			}
 			catch (ScriptCompilationException e)
 			{
+				Console.WriteLine();
 				Console.WriteLine("Build failed:");
 
 				foreach (var err in e.Errors) Console.WriteLine("{0}, {1}", scriptPath, err);
@@ -83,28 +86,36 @@ namespace DPloy.Distributor
 			}
 			catch (ScriptExecutionException e)
 			{
-				PrintException(options, e);
+				Console.WriteLine();
+				PrintUnhandledScriptException(options, e);
 				return ExitCode.ExecutionError;
 			}
 			catch (Exception e)
 			{
+				Console.WriteLine();
 				PrintUnhandledException(e);
 				return ExitCode.UnhandledException;
 			}
 		}
 
+		private static void PrintUnhandledScriptException(DeployOptions options, ScriptExecutionException e)
+		{
+			Console.WriteLine("Terminating due to unhandled exception in the script file:");
+			PrintException(options, e);
+		}
+
 		private static void PrintUnhandledException(Exception e)
 		{
-			Console.WriteLine("Terminating due to unexpected exception:");
+			Console.WriteLine("Terminating due to an unhandled exception:");
 			Console.WriteLine(e);
 		}
 
 		private static void PrintException(DeployOptions options, Exception e)
 		{
 			if (options.Verbose)
-				Console.WriteLine("Error:\r\n{0}", e);
+				Console.WriteLine("\tError:\r\n{0}", e);
 			else
-				Console.WriteLine("Error: {0}", e.Message);
+				Console.WriteLine("\tError: {0}", e.Message);
 		}
 	}
 }

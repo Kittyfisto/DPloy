@@ -5,8 +5,9 @@ public class Deployment
 	// This is the main entry point of a deployment script
 	public void Main(IDistributor distributor)
 	{
-		var node = distributor.ConnectTo("10.82.0.205", 49152);
-		node.Install(@"C:\Users\miessler\Downloads\npp.7.6.2.Installer.exe");
-		w
+		var node = distributor.ConnectTo("127.0.0.1", 49152);
+		node.CopyFile("CommandLine.xml", @"%temp%\CommandLine.xml");
+		node.CopyFiles(new[] {"CommandLine.xml"}, "%temp%");
+		node.CopyDirectory(".", "%temp%");
 	}
 }

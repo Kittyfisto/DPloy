@@ -6,15 +6,17 @@ using SharpRemote.ServiceDiscovery;
 
 namespace DPloy.Distributor
 {
-	public sealed class Distributor
+	internal sealed class Distributor
 		: IDistributor
 		, IDisposable
 	{
 		private NetworkServiceDiscoverer _discoverer;
 		private readonly List<NodeClient> _clients;
+		private readonly ProgressWriter _progressWriter;
 
-		public Distributor()
+		public Distributor(ProgressWriter progressWriter)
 		{
+			_progressWriter = progressWriter;
 			_clients = new List<NodeClient>();
 		}
 
@@ -31,19 +33,19 @@ namespace DPloy.Distributor
 		public INode ConnectTo(string addressOrDomain, int port)
 		{
 			var ep = new IPEndPoint(IPAddress.Parse(addressOrDomain), port);
-			return AddClient(() => NodeClient.Create(ep));
+			return AddClient(() => NodeClient.Create(_progressWriter, ep));
 		}
 
 		public INode ConnectTo(string computerName)
 		{
 			if (_discoverer == null)
 				_discoverer = new NetworkServiceDiscoverer();
-			return AddClient(() => NodeClient.Create(_discoverer, computerName));
+			return AddClient(() => NodeClient.Create(_progressWriter, _discoverer, computerName));
 		}
 
 		public INode ConnectTo(IPEndPoint ep)
 		{
-			return AddClient(() => NodeClient.Create(ep));
+			return AddClient(() => NodeClient.Create(_progressWriter, ep));
 		}
 
 		private INode AddClient(Func<NodeClient> fn)

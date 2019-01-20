@@ -27,6 +27,7 @@ namespace DPloy.Distributor
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
+		private readonly ProgressWriter _progressWriter;
 		private readonly IFiles _files;
 		private readonly IShell _shell;
 		private readonly IServices _services;
@@ -34,8 +35,9 @@ namespace DPloy.Distributor
 
 		private const int FilePacketBufferSize = 1024 * 1024 * 4;
 
-		private NodeClient(SocketEndPoint socket)
+		private NodeClient(ProgressWriter progressWriter, SocketEndPoint socket)
 		{
+			_progressWriter = progressWriter;
 			_socket = socket;
 			_files = _socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File);
 			_shell = _socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell);
@@ -46,23 +48,57 @@ namespace DPloy.Distributor
 
 		public void Dispose()
 		{
-			_socket?.Dispose();
+			var socket = _socket;
+			if (socket != null)
+			{
+				var operation = _progressWriter.BeginDisconnect(socket.RemoteEndPoint);
+				try
+				{
+					socket.Disconnect();
+					operation.Success();
+				}
+				catch (Exception e)
+				{
+					operation.Failed(e);
+				}
+				finally
+				{
+					_socket?.Dispose();
+				}
+			}
 		}
 
 		#endregion
 
-		public static NodeClient Create(IPEndPoint endPoint)
+		public static NodeClient Create(ProgressWriter progressWriter, IPEndPoint endPoint)
+		{
+			var operation = progressWriter.BeginConnect(endPoint.ToString());
+
+			try
+			{
+				return Create(progressWriter, endPoint, operation);
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
+		private static NodeClient Create(ProgressWriter progressWriter, IPEndPoint endPoint, Operation operation)
 		{
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
-				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
-				heartbeatSettings: new HeartbeatSettings
-				{
-					AllowRemoteHeartbeatDisable = true
-				});
+			                                clientAuthenticator: MachineNameAuthenticator.CreateClient(),
+			                                heartbeatSettings: new HeartbeatSettings
+			                                {
+				                                AllowRemoteHeartbeatDisable = true
+			                                });
+
 			try
 			{
 				socket.Connect(endPoint);
-				return new NodeClient(socket);
+				operation.Success();
+				return new NodeClient(progressWriter, socket);
 			}
 			catch (Exception)
 			{
@@ -71,7 +107,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public static NodeClient Create(INetworkServiceDiscoverer discoverer, string computerName)
+		public static NodeClient Create(ProgressWriter progressWriter, INetworkServiceDiscoverer discoverer, string computerName)
 		{
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
 				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
@@ -87,7 +123,7 @@ namespace DPloy.Distributor
 				var services = discoverer.FindServices(serviceName);
 
 				socket.Connect(serviceName);
-				return new NodeClient(socket);
+				return new NodeClient(progressWriter, socket);
 			}
 			catch (Exception e)
 			{
@@ -100,30 +136,47 @@ namespace DPloy.Distributor
 
 		public void CopyFile(string sourceFilePath, string destinationFilePath)
 		{
-			CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFilePath);
-		}
-
-		private void CopyFilePrivate(string sourceFilePath, string destinationFilePath)
-		{
-			var fileSize = new FileInfo(sourceFilePath).Length;
-			if (IsSmallFile(fileSize))
+			var operation = _progressWriter.BeginCopyFile(sourceFilePath, destinationFilePath);
+			try
 			{
-				CopyFileBatch(new[]{sourceFilePath}, new []{destinationFilePath});
+				CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFilePath);
+				operation.Success();
 			}
-			else
+			catch (Exception e)
 			{
-				CopyFileChunked(sourceFilePath, destinationFilePath, fileSize);
+				operation.Failed(e);
+				throw;
 			}
 		}
 
 		public void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder)
 		{
-			CopyFilesPrivate(sourceFiles.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
+			var operation = _progressWriter.BeginCopyFiles(sourceFiles.ToList(), destinationFolder);
+			try
+			{
+				CopyFilesPrivate(sourceFiles.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
 		}
 
-		public void CopyDirectory(string sourceDirectoryPath, string destinationPath)
+		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
 		{
-			throw new NotImplementedException();
+			var operation = _progressWriter.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
+			try
+			{
+				CopyFilesPrivate(Directory.EnumerateFiles(Paths.NormalizeAndEvaluate(sourceDirectoryPath)), destinationDirectoryPath);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
 		}
 
 		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder)
@@ -178,6 +231,19 @@ namespace DPloy.Distributor
 
 		#endregion
 
+		private void CopyFilePrivate(string sourceFilePath, string destinationFilePath)
+		{
+			var fileSize = new FileInfo(sourceFilePath).Length;
+			if (IsSmallFile(fileSize))
+			{
+				CopyFileBatch(new[]{sourceFilePath}, new []{destinationFilePath});
+			}
+			else
+			{
+				CopyFileChunked(sourceFilePath, destinationFilePath, fileSize);
+			}
+		}
+
 		private void InstallPrivate(string installerPath, string commandLine)
 		{
 			var destinationPath = Path.Combine(Paths.Temp, "DPloy", "Installers");
@@ -195,7 +261,8 @@ namespace DPloy.Distributor
 
 			foreach (var bigFile in bigFiles)
 			{
-				CopyFile(bigFile, destinationFolder);
+				var destinationFilePath = Path.Combine(destinationFolder, Path.GetFileName(bigFile));
+				CopyFilePrivate(bigFile, destinationFilePath);
 			}
 
 			var destinationFilePaths =

@@ -24,7 +24,7 @@ namespace DPloy.Core
 		{
 			RegisterFileAppender(constants);
 			LogHeader(Constants.Distributor, args);
-			RegisterConsoleAppender();
+			//RegisterConsoleAppender();
 		}
 
 		private static void RegisterFileAppender(IApplicationConstants constants)
