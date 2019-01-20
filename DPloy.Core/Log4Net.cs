@@ -20,11 +20,13 @@ namespace DPloy.Core
 		/// </summary>
 		/// <param name="constants"></param>
 		/// <param name="args"></param>
-		public static void Setup(IApplicationConstants constants, string[] args)
+		/// <param name="logToConsole"></param>
+		public static void Setup(IApplicationConstants constants, string[] args, bool logToConsole = false)
 		{
 			RegisterFileAppender(constants);
 			LogHeader(Constants.Distributor, args);
-			//RegisterConsoleAppender();
+			if (logToConsole)
+				RegisterConsoleAppender();
 		}
 
 		private static void RegisterFileAppender(IApplicationConstants constants)

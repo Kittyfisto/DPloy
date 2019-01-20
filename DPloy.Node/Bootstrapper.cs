@@ -23,7 +23,7 @@ namespace DPloy.Node
 
 		private static int Run(string[] args)
 		{
-			Log4Net.Setup(Constants.Node, args);
+			Log4Net.Setup(Constants.Node, args, logToConsole: true);
 
 			return Parser.Default.ParseArguments<CommandLineOptions>(args)
 				.MapResult(
