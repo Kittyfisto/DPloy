@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 
 namespace DPloy.Core.PublicApi
 {
@@ -50,6 +51,11 @@ namespace DPloy.Core.PublicApi
 		/// <summary>
 		///     Downloads a file onto this node.
 		/// </summary>
+		/// <remarks>
+		///     The file is downloaded FROM this node, which means that the node itself must be capable of downloading
+		///     the file (i.e. have the appropriate access rights). If this is not the case, then you can simply
+		///     call <see cref="WebClient.DownloadFile"/> in your script itself, followed by <see cref="CopyFile"/>.
+		/// </remarks>
 		/// <param name="sourceFileUri"></param>
 		/// <param name="destinationFilePath"></param>
 		void DownloadFile(string sourceFileUri, string destinationFilePath);
