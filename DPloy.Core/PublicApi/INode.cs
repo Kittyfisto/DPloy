@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace DPloy.Core.PublicApi
 {
@@ -55,6 +54,8 @@ namespace DPloy.Core.PublicApi
 		/// </summary>
 		/// <param name="destinationFilePath"></param>
 		/// <param name="content"></param>
+		/// <exception cref="ArgumentNullException"></exception>
+		/// <exception cref="PathTooLongException"></exception>
 		void CreateFile(string destinationFilePath, byte[] content);
 
 		/// <summary>
@@ -73,6 +74,7 @@ namespace DPloy.Core.PublicApi
 		/// </example>
 		/// <param name="sourceFilePath">The file path (relative or absolute) of the file which shall be copied</param>
 		/// <param name="destinationFilePath"></param>
+		/// <exception cref="ArgumentNullException"></exception>
 		/// <exception cref="PathTooLongException"></exception>
 		void CopyFile(string sourceFilePath, string destinationFilePath);
 
@@ -84,8 +86,17 @@ namespace DPloy.Core.PublicApi
 		/// </remarks>
 		/// <param name="sourceFilePaths">The file path (relative or absolute) of the files which shall be copied</param>
 		/// <param name="destinationFolder"></param>
+		/// <exception cref="ArgumentNullException"></exception>
 		/// <exception cref="PathTooLongException"></exception>
 		void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder);
+
+		/// <summary>
+		///     Deletes a file from this node, does nothing if the file doesn't exist.
+		/// </summary>
+		/// <param name="destinationFilePath"></param>
+		/// <exception cref="ArgumentNullException"></exception>
+		/// <exception cref="PathTooLongException"></exception>
+		void DeleteFile(string destinationFilePath);
 
 		/// <summary>
 		///     Creates a directory on this node if it doesn't already exist.
@@ -95,11 +106,14 @@ namespace DPloy.Core.PublicApi
 		void CreateDirectory(string destinationDirectoryPath);
 
 		/// <summary>
-		///     Copies a directory and all of its files (but not its sub-directories) to the given
+		///     Copies a directory and all of its files (but NOT its sub-directories) to the given
 		///     destination folder.
 		/// </summary>
 		/// <remarks>
 		///     Any file already existing at the destination will be overwritten, if need be.
+		/// </remarks>
+		/// <remarks>
+		///     If the source directory is empty, then an empty directory will be created at the destination.
 		/// </remarks>
 		/// <example>
 		///     <paramref name="sourceDirectoryPath" /> is set to C:\MyAwesomeDirectory
@@ -136,13 +150,6 @@ namespace DPloy.Core.PublicApi
 		/// <param name="destinationDirectoryPath">The directory on the node which shall be deleted</param>
 		/// <exception cref="PathTooLongException"></exception>
 		void DeleteDirectoryRecursive(string destinationDirectoryPath);
-
-		/// <summary>
-		///     Deletes a file from this node, does nothing if the file doesn't exist.
-		/// </summary>
-		/// <param name="destinationFilePath"></param>
-		/// <exception cref="PathTooLongException"></exception>
-		void DeleteFile(string destinationFilePath);
 
 		/// <summary>
 		///     Copies the given archive to this node and unzips its contents into the given folder.

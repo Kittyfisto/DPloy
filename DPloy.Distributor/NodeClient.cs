@@ -239,7 +239,16 @@ namespace DPloy.Distributor
 			var operation = _consoleWriter.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
 			try
 			{
-				CopyFilesPrivate(Directory.EnumerateFiles(Paths.NormalizeAndEvaluate(sourceDirectoryPath)).ToList(), destinationDirectoryPath);
+				var sourceFiles = Directory.EnumerateFiles(Paths.NormalizeAndEvaluate(sourceDirectoryPath)).ToList();
+				if (sourceFiles.Any())
+				{
+					CopyFilesPrivate(sourceFiles, destinationDirectoryPath);
+				}
+				else
+				{
+					CreateDirectoryPrivate(destinationDirectoryPath);
+				}
+
 				operation.Success();
 			}
 			catch (Exception e)
