@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Reflection;
 using System.ServiceProcess;
-using DPloy.Core;
 using DPloy.Core.SharpRemoteInterfaces;
 using log4net;
 
@@ -34,7 +33,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 				}
 
 				// we can't just swallow every exception
-				throw;
+				throw new ArgumentException($"No such service: {serviceName}", e);
 			}
 
 			Log.InfoFormat("Started service '{0}'", serviceName);
@@ -60,8 +59,9 @@ namespace DPloy.Node.SharpRemoteImplementations
 					return;
 				}
 
-				// we can't just swallow every exception
-				throw;
+				Log.InfoFormat("Service '{0}' does not exist so it doesn't need to be stopped anyways", serviceName);
+				Log.DebugFormat("Ignoring exception: '{0}'", e);
+				return;
 			}
 
 			Log.InfoFormat("Stopped service '{0}'", serviceName);

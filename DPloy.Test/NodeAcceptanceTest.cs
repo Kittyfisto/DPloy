@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using DPloy.Distributor;
@@ -88,6 +89,56 @@ namespace DPloy.Test
 
 					foreach (var file in destinationFiles)
 						File.Exists(file).Should().BeTrue();
+				}
+			}
+		}
+
+		[Test]
+		public void TestDeleteNonExistingFile()
+		{
+			using (var nodeServer = new Node.NodeServer())
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
+			{
+				var ep = nodeServer.Bind(IPAddress.Loopback);
+				using (var nodeClient = distributor.ConnectTo(ep))
+				{
+					var file = Path.Combine(GetTestTempDirectory(), "Idontexist.bin");
+					new Action(() => nodeClient.DeleteFile(file)).Should().NotThrow();
+				}
+			}
+		}
+
+		[Test]
+		public void TestDeleteExistingFile()
+		{
+			using (var nodeServer = new Node.NodeServer())
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
+			{
+				var ep = nodeServer.Bind(IPAddress.Loopback);
+				using (var nodeClient = distributor.ConnectTo(ep))
+				{
+					var filePath = Path.Combine(GetTestTempDirectory(), "Hello.txt");
+					WriteAllText(filePath, "I'm there!");
+					File.Exists(filePath).Should().BeTrue();
+
+					nodeClient.DeleteFile(filePath);
+
+					File.Exists(filePath).Should().BeFalse();
+				}
+			}
+		}
+
+		[Test]
+		public void TestNonExistingDirectory()
+		{
+			using (var nodeServer = new Node.NodeServer())
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
+			{
+				var ep = nodeServer.Bind(IPAddress.Loopback);
+				using (var nodeClient = distributor.ConnectTo(ep))
+				{
+					var directory = Path.Combine(GetTestTempDirectory(), "Idontexist");
+					new Action(() => nodeClient.DeleteDirectoryRecursive(directory)).Should().NotThrow();
 				}
 			}
 		}

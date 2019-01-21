@@ -264,6 +264,21 @@ namespace DPloy.Distributor
 			}
 		}
 
+		public void DeleteFile(string destinationFilePath)
+		{
+			var operation = _consoleWriter.BeginDeleteFile(destinationFilePath);
+			try
+			{
+				DeleteFilePrivate(destinationFilePath);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
 		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder)
 		{
 			var destinationArchiveFolder = @"%temp%";
@@ -450,6 +465,11 @@ namespace DPloy.Distributor
 		private void DeleteDirectoryRecursivePrivate(string destinationDirectoryPath)
 		{
 			_files.DeleteDirectoryAsync(destinationDirectoryPath, recursive: true).Wait();
+		}
+
+		private void DeleteFilePrivate(string destinationFilePath)
+		{
+			_files.DeleteFileAsync(destinationFilePath).Wait();
 		}
 
 		private bool Exists(string destinationFilePath, long expectedFileSize, byte[] expectedHash)

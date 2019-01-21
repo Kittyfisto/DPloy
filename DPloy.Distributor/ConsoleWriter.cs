@@ -55,7 +55,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedScriptFilePath);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginCompileScript(string scriptFilePath)
@@ -67,7 +67,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedScriptFilePath);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginConnect(string destination)
@@ -76,7 +76,7 @@ namespace DPloy.Distributor
 			var maxLineLength = MaxLineLength;
 			var message = new StringBuilder();
 			message.AppendFormat(template, destination);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginDisconnect(IPEndPoint remoteEndPoint)
@@ -85,7 +85,7 @@ namespace DPloy.Distributor
 			var maxLineLength = MaxLineLength;
 			var message = new StringBuilder();
 			message.AppendFormat(template, remoteEndPoint);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginCopyFile(string sourcePath, string destinationPath)
@@ -100,7 +100,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedSourcePath, pruntedDestinationPath);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginCopyFiles(IReadOnlyList<string> sourceFiles, string destinationFolder)
@@ -113,7 +113,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedDestinationPath);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginCopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
@@ -128,7 +128,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedSourcePath, prunedDestinationPath);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginCreateDirectory(string destinationDirectoryPath)
@@ -141,7 +141,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedDestinationPath);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginDeleteDirectory(string destinationDirectoryPath)
@@ -154,7 +154,20 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedDestinationPath);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
+		}
+
+		public Operation BeginDeleteFile(string destinationFilePath)
+		{
+			var template = NodeOperationIndent + "Deleting file '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedDestinationPath = PrunePath(destinationFilePath, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedDestinationPath);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginExecuteCommand(string cmd)
@@ -167,7 +180,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedCommand);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginStartService(string serviceName)
@@ -182,7 +195,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedServiceName);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginStopService(string serviceName)
@@ -197,7 +210,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedServiceName);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
 		public Operation BeginKillProcesses(string processName)
@@ -212,15 +225,15 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedServiceName);
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message, maxLineLength);
 		}
 
-		private Operation Create(StringBuilder message, int maxLineLength)
+		private Operation CreateOperation(StringBuilder message, int maxLineLength)
 		{
-			return Create(message.ToString(), maxLineLength);
+			return CreateOperation(message.ToString(), maxLineLength);
 		}
 
-		private Operation Create(string message, int maxLineLength)
+		private Operation CreateOperation(string message, int maxLineLength)
 		{
 			return new Operation(Console.Out, message, maxLineLength, _verbose);
 		}

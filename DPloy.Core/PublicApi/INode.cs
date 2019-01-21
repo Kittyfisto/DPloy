@@ -117,13 +117,16 @@ namespace DPloy.Core.PublicApi
 		void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath);
 
 		/// <summary>
-		///     Deletes a directory from this node.
+		///     Deletes a directory from this node, does nothing if the directory doesn't exist.
 		/// </summary>
-		/// <remarks>
-		///     Deleting a non-existing directory is not considered a failure: The method will return.
-		/// </remarks>
 		/// <param name="destinationDirectoryPath">The directory on the node which shall be deleted</param>
 		void DeleteDirectoryRecursive(string destinationDirectoryPath);
+
+		/// <summary>
+		///     Deletes a file from this node, does nothing if the file doesn't exist.
+		/// </summary>
+		/// <param name="destinationFilePath"></param>
+		void DeleteFile(string destinationFilePath);
 
 		/// <summary>
 		///     Copies the given archive to this node and unzips its contents into the given folder.
@@ -151,9 +154,8 @@ namespace DPloy.Core.PublicApi
 		void StartService(string serviceName);
 
 		/// <summary>
-		///     Stops the given service, does nothing if the service is already stopped.
+		///     Stops the given service, does nothing if the service is already stopped or if the service doesn't exist.
 		/// </summary>
-		/// <exception cref="ArgumentException">In case there is no service named <paramref name="serviceName" /></exception>
 		/// <param name="serviceName"></param>
 		void StopService(string serviceName);
 
