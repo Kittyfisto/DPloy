@@ -20,6 +20,7 @@ namespace DPloy.Core.PublicApi
 	/// <remarks>
 	///     TODO: Introduce API toggles to force copy files, if desired (maybe these don't need to be performed on a per-method
 	///     basis but maybe per node)
+	///     TODO: Figure out how a proxy might be configured
 	/// </remarks>
 	public interface INode : IDisposable
 	{

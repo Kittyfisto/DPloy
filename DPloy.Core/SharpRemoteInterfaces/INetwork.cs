@@ -4,6 +4,7 @@ namespace DPloy.Core.SharpRemoteInterfaces
 {
 	public interface INetwork
 	{
-		Task DownloadFileAsync(string sourceFileUri, string destinationFilePath);
+		Task DownloadFileAsync(string sourceFileUri,
+		                       string destinationFilePath);
 	}
 }
