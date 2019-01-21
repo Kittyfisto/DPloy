@@ -42,6 +42,8 @@ namespace DPloy.Distributor
 			_consoleWriter = consoleWriter;
 			_socket = socket;
 
+			//ThrowIfIncompatible(socket);
+
 			_files = new FilesWrapper(_socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File),
 			                          remoteMachineName);
 			_shell = new ShellWrapper(_socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell),
@@ -52,6 +54,63 @@ namespace DPloy.Distributor
 			                                  remoteMachineName);
 			_network = new NetworkWrapper(_socket.GetExistingOrCreateNewProxy<INetwork>(ObjectIds.Network),
 			                                  remoteMachineName);
+		}
+
+		private static void ThrowIfIncompatible(SocketEndPoint socket)
+		{
+			var expectedInterfaces = new[]
+				{typeof(IFiles), typeof(IShell), typeof(IServices), typeof(IProcesses), typeof(INetwork)};
+
+			var interfaces = socket.GetExistingOrCreateNewProxy<IInterfaces>(ObjectIds.Interface);
+			var actualTypeModel = interfaces.GetTypeModel();
+			foreach (var expectedInterface in expectedInterfaces)
+			{
+				ThrowIfIncompatible(expectedInterface, actualTypeModel);
+			}
+		}
+
+		private static void ThrowIfIncompatible(Type expectedInterface, TypeModel actualTypeModel)
+		{
+			var expectedTypeModel = new TypeModel();
+			var expectedDescription = expectedTypeModel.Add(expectedInterface, assumeByReference: true);
+
+			var actualDescription = actualTypeModel.Types.FirstOrDefault(x => x.AssemblyQualifiedName == expectedInterface.AssemblyQualifiedName);
+			if (actualDescription == null)
+				throw new NotImplementedException($"The remote is missing interface: {expectedInterface.Name}");
+
+			ThrowIfIncompatible(expectedDescription, actualDescription);
+		}
+
+		private static void ThrowIfIncompatible(ITypeDescription expectedDescription, TypeDescription actualDescription)
+		{
+			foreach (var expectedMethod in expectedDescription.Methods)
+			{
+				var actualMethod = actualDescription.Methods.FirstOrDefault(x => x.Name == expectedMethod.Name);
+				if (actualMethod == null)
+					throw new NotImplementedException($"The remote is missing interface method: {expectedDescription.Type.Name}.{expectedMethod.Name}");
+
+				ThrowIfIncompatible(expectedMethod, actualMethod);
+			}
+		}
+
+		private static void ThrowIfIncompatible(IMethodDescription expectedDescription, MethodDescription actualDescription)
+		{
+			ThrowIfIncompatible(expectedDescription.ReturnParameter, actualDescription.ReturnParameter);
+
+			if (expectedDescription.Parameters.Count != actualDescription.Parameters.Length)
+				throw new NotImplementedException($"The remote method has a different amount of parameters");
+
+			for(int i = 0; i < expectedDescription.Parameters.Count; ++i)
+			{
+				var expectedParameter = expectedDescription.Parameters[i];
+				var actualParameter = actualDescription.Parameters[i];
+				ThrowIfIncompatible(expectedParameter, actualParameter);
+			}
+		}
+
+		private static void ThrowIfIncompatible(IParameterDescription expectedParameter, ParameterDescription actualParameter)
+		{
+			ThrowIfIncompatible(expectedParameter.ParameterType, actualParameter.ParameterType);
 		}
 
 		#region IDisposable

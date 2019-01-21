@@ -28,6 +28,7 @@ namespace DPloy.Node
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
+		private readonly Interfaces _interfaces;
 		private readonly Files _files;
 		private readonly Services _services;
 		private readonly Shell _shell;
@@ -53,6 +54,9 @@ namespace DPloy.Node
 					AllowRemoteHeartbeatDisable = true
 				});
 			_socket.OnDisconnected += SocketOnOnDisconnected;
+
+			_interfaces = new Interfaces();
+			_socket.CreateServant<IInterfaces>(ObjectIds.Interface, _interfaces);
 
 			_files = new Files();
 			_socket.CreateServant<IFiles>(ObjectIds.File, _files);
@@ -85,6 +89,7 @@ namespace DPloy.Node
 		{
 			// These objects shall be kept alive at least until this method is called!
 			// DO NOT REMOVE THE FOLLOWING CODE
+			GC.KeepAlive(_interfaces);
 			GC.KeepAlive(_files);
 			GC.KeepAlive(_shell);
 			GC.KeepAlive(_services);
