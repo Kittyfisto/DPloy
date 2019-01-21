@@ -174,6 +174,21 @@ namespace DPloy.Distributor
 			}
 		}
 
+		public void CreateFile(string destinationFilePath, byte[] content)
+		{
+			var operation = _consoleWriter.BeginCreateFile(destinationFilePath);
+			try
+			{
+				CreateFilePrivate(destinationFilePath, content);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
 		public void CopyFile(string sourceFilePath, string destinationFilePath)
 		{
 			var operation = _consoleWriter.BeginCopyFile(sourceFilePath, destinationFilePath);
@@ -189,12 +204,12 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder)
+		public void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder)
 		{
-			var operation = _consoleWriter.BeginCopyFiles(sourceFiles.ToList(), destinationFolder);
+			var operation = _consoleWriter.BeginCopyFiles(sourceFilePaths.ToList(), destinationFolder);
 			try
 			{
-				CopyFilesPrivate(sourceFiles.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
+				CopyFilesPrivate(sourceFilePaths.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
 				operation.Success();
 			}
 			catch (Exception e)
@@ -472,6 +487,16 @@ namespace DPloy.Distributor
 			_files.DeleteFileAsync(destinationFilePath).Wait();
 		}
 
+		private void CreateFilePrivate(string destinationFilePath, byte[] content)
+		{
+			var file = new CreateFile
+			{
+				FilePath = destinationFilePath,
+				Content = content
+			};
+			_files.ExecuteBatchAsync(new FileBatch{FilesToCreate = {file}}).Wait();
+		}
+
 		private bool Exists(string destinationFilePath, long expectedFileSize, byte[] expectedHash)
 		{
 			return _files.Exists(destinationFilePath, expectedFileSize, expectedHash);
@@ -588,12 +613,12 @@ namespace DPloy.Distributor
 
 				Log.InfoFormat("Copying '{0}' to '{1}'...", sourceFilePath, destinationFilePath);
 
-				var instruction = new CopyFile
+				var instruction = new CreateFile
 				{
 					FilePath = destinationFilePath,
 					Content = File.ReadAllBytes(sourceFilePath)
 				};
-				batch.FilesToCopy.Add(instruction);
+				batch.FilesToCreate.Add(instruction);
 				length += instruction.Content.Length;
 
 				if (length >= FilePacketBufferSize)

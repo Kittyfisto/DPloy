@@ -203,7 +203,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task ExecuteBatchAsync(FileBatch batch)
 		{
-			foreach (var file in batch.FilesToCopy)
+			foreach (var file in batch.FilesToCreate)
 			{
 				CopyFile(file);
 			}
@@ -253,7 +253,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 			}
 		}
 
-		private void CopyFile(CopyFile file)
+		private void CopyFile(CreateFile file)
 		{
 			var filePath = Paths.NormalizeAndEvaluate(file.FilePath);
 

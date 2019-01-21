@@ -94,6 +94,49 @@ namespace DPloy.Test
 		}
 
 		[Test]
+		public void TestCreateNonExistingFile()
+		{
+			using (var nodeServer = new Node.NodeServer())
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
+			{
+				var ep = nodeServer.Bind(IPAddress.Loopback);
+				using (var nodeClient = distributor.ConnectTo(ep))
+				{
+					var filePath = Path.Combine(GetTestTempDirectory(), "A file.bin");
+					File.Exists(filePath).Should().BeFalse();
+
+					var content = new byte[] {1, 2, 3, 4};
+					nodeClient.CreateFile(filePath, content);
+
+					File.Exists(filePath).Should().BeTrue();
+					File.ReadAllBytes(filePath).Should().Equal(content);
+				}
+			}
+		}
+
+		[Test]
+		public void TestCreateExistingFile()
+		{
+			using (var nodeServer = new Node.NodeServer())
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
+			{
+				var ep = nodeServer.Bind(IPAddress.Loopback);
+				using (var nodeClient = distributor.ConnectTo(ep))
+				{
+					var filePath = Path.Combine(GetTestTempDirectory(), "A file.bin");
+					Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+					File.WriteAllBytes(filePath, new byte[] {1, 2, 3, 4, 5});
+
+					var content = new byte[] {1, 2, 3, 4};
+					nodeClient.CreateFile(filePath, content);
+
+					File.Exists(filePath).Should().BeTrue();
+					File.ReadAllBytes(filePath).Should().Equal(content);
+				}
+			}
+		}
+
+		[Test]
 		public void TestDeleteNonExistingFile()
 		{
 			using (var nodeServer = new Node.NodeServer())

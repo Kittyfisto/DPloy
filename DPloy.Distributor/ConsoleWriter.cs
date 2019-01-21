@@ -170,6 +170,19 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
+		public Operation BeginCreateFile(string destinationFilePath)
+		{
+			var template = NodeOperationIndent + "Creating file '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedDestinationPath = PrunePath(destinationFilePath, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedDestinationPath);
+			return CreateOperation(message, maxLineLength);
+		}
+
 		public Operation BeginExecuteCommand(string cmd)
 		{
 			var template = NodeOperationIndent + "Executing '{0}'";

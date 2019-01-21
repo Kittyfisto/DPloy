@@ -9,18 +9,18 @@ namespace DPloy.Core.SharpRemoteInterfaces
 	public sealed class FileBatch
 	{
 		[DataMember(Name = "FilesToCopy")]
-		public List<CopyFile> FilesToCopy;
+		public List<CreateFile> FilesToCreate;
 
 		public FileBatch()
 		{
-			FilesToCopy = new List<CopyFile>();
+			FilesToCreate = new List<CreateFile>();
 		}
 
 		[Pure]
 		public bool Any()
 		{
 			// TODO: Include other instructions once they're here
-			return FilesToCopy.Any();
+			return FilesToCreate.Any();
 		}
 	}
 }

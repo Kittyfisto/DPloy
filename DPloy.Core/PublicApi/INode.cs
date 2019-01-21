@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace DPloy.Core.PublicApi
 {
@@ -49,6 +50,14 @@ namespace DPloy.Core.PublicApi
 		#region Filesystem
 
 		/// <summary>
+		///     Creates a new file on this node.
+		///     The content will be written to the new file  and if the file already exists it will be overwritten.
+		/// </summary>
+		/// <param name="destinationFilePath"></param>
+		/// <param name="content"></param>
+		void CreateFile(string destinationFilePath, byte[] content);
+
+		/// <summary>
 		///     Copies a single file to this node, blocks until the file has been fully transferred or an error occured.
 		/// </summary>
 		/// <remarks>
@@ -64,6 +73,7 @@ namespace DPloy.Core.PublicApi
 		/// </example>
 		/// <param name="sourceFilePath">The file path (relative or absolute) of the file which shall be copied</param>
 		/// <param name="destinationFilePath"></param>
+		/// <exception cref="PathTooLongException"></exception>
 		void CopyFile(string sourceFilePath, string destinationFilePath);
 
 		/// <summary>
@@ -72,14 +82,16 @@ namespace DPloy.Core.PublicApi
 		/// <remarks>
 		///     If a file with any of the given names already exists on the target system then it will be overwritten.
 		/// </remarks>
-		/// <param name="sourceFiles"></param>
+		/// <param name="sourceFilePaths">The file path (relative or absolute) of the files which shall be copied</param>
 		/// <param name="destinationFolder"></param>
-		void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder);
+		/// <exception cref="PathTooLongException"></exception>
+		void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder);
 
 		/// <summary>
 		///     Creates a directory on this node if it doesn't already exist.
 		/// </summary>
 		/// <param name="destinationDirectoryPath"></param>
+		/// <exception cref="PathTooLongException"></exception>
 		void CreateDirectory(string destinationDirectoryPath);
 
 		/// <summary>
@@ -97,6 +109,7 @@ namespace DPloy.Core.PublicApi
 		/// </example>
 		/// <param name="sourceDirectoryPath">The path to the source directory which shall be copied</param>
 		/// <param name="destinationDirectoryPath">The path on this node where the source directory shall be placed</param>
+		/// <exception cref="PathTooLongException"></exception>
 		void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath);
 
 		/// <summary>
@@ -114,18 +127,21 @@ namespace DPloy.Core.PublicApi
 		/// </example>
 		/// <param name="sourceDirectoryPath">The path to the source directory which shall be copied</param>
 		/// <param name="destinationDirectoryPath">The path on this node where the source directory shall be placed</param>
+		/// <exception cref="PathTooLongException"></exception>
 		void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath);
 
 		/// <summary>
 		///     Deletes a directory from this node, does nothing if the directory doesn't exist.
 		/// </summary>
 		/// <param name="destinationDirectoryPath">The directory on the node which shall be deleted</param>
+		/// <exception cref="PathTooLongException"></exception>
 		void DeleteDirectoryRecursive(string destinationDirectoryPath);
 
 		/// <summary>
 		///     Deletes a file from this node, does nothing if the file doesn't exist.
 		/// </summary>
 		/// <param name="destinationFilePath"></param>
+		/// <exception cref="PathTooLongException"></exception>
 		void DeleteFile(string destinationFilePath);
 
 		/// <summary>

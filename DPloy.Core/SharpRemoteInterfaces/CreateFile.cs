@@ -3,7 +3,7 @@
 namespace DPloy.Core.SharpRemoteInterfaces
 {
 	[DataContract]
-	public sealed class CopyFile
+	public sealed class CreateFile
 	{
 		[DataMember(Name = "FileName")]
 		public string FilePath;
