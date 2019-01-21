@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using DPloy.Core;
 using FluentAssertions;
 using NUnit.Framework;
@@ -9,6 +11,26 @@ namespace DPloy.Test
 	[TestFixture]
 	public sealed class PathsTest
 	{
+		//[Test]
+		//public void TestSupportedFolders()
+		//{
+		//	var specialFolders = Enum.GetValues(typeof(Environment.SpecialFolder)).Cast<Environment.SpecialFolder>();
+		//	var missingImplementations = new List<Environment.SpecialFolder>();
+		//	foreach (var specialFolder in specialFolders)
+		//	{
+		//		try
+		//		{
+		//			Paths.NormalizeAndEvaluate($"%{specialFolder}%");
+		//		}
+		//		catch (Exception e)
+		//		{
+		//			missingImplementations.Add(specialFolder);
+		//		}
+		//	}
+
+		//	missingImplementations.Should().BeEmpty();
+		//}
+
 		[Test]
 		public void TestEvaluateTemp()
 		{
@@ -98,6 +120,76 @@ namespace DPloy.Test
 		{
 			Paths.NormalizeAndEvaluate("%CommonProgramFilesX86%\\foo\\bar\\..\\stuff")
 			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluatePrograms()
+		{
+			Paths.NormalizeAndEvaluate("%Programs%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateMyDocuments()
+		{
+			Paths.NormalizeAndEvaluate("%MyDocuments%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateFavorites()
+		{
+			Paths.NormalizeAndEvaluate("%Favorites%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Favorites), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateStartup()
+		{
+			Paths.NormalizeAndEvaluate("%Startup%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateRecent()
+		{
+			Paths.NormalizeAndEvaluate("%Recent%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Recent), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateSendTo()
+		{
+			Paths.NormalizeAndEvaluate("%SendTo%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SendTo), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateStartMenu()
+		{
+			Paths.NormalizeAndEvaluate("%StartMenu%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateMyMusic()
+		{
+			Paths.NormalizeAndEvaluate("%MyMusic%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateMyVideos()
+		{
+			Paths.NormalizeAndEvaluate("%MyVideos%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "foo", "stuff"));
+		}
+
+		[Test]
+		public void TestEvaluateDesktopDirectory()
+		{
+			Paths.NormalizeAndEvaluate("%DesktopDirectory%\\foo\\bar\\..\\stuff")
+			     .Should().Be(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "foo", "stuff"));
 		}
 	}
 }

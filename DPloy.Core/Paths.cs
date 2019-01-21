@@ -23,6 +23,16 @@ namespace DPloy.Core
 		public static readonly string SystemX86 = "%SystemX86%";
 		public static readonly string CommonProgramFiles = "%CommonProgramFiles%";
 		public static readonly string CommonProgramFilesX86 = "%CommonProgramFilesX86%";
+		public static readonly string Programs = "%Programs%";
+		public static readonly string MyDocuments = "%MyDocuments%";
+		public static readonly string Favorites = "%Favorites%";
+		public static readonly string Startup = "%Startup%";
+		public static readonly string Recent = "%Recent%";
+		public static readonly string SendTo = "%SendTo%";
+		public static readonly string StartMenu = "%StartMenu%";
+		public static readonly string MyMusic = "%MyMusic%";
+		public static readonly string MyVideos = "%MyVideos%";
+		public static readonly string DesktopDirectory = "%DesktopDirectory%";
 
 		static Paths()
 		{
@@ -40,7 +50,17 @@ namespace DPloy.Core
 				{System, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System))},
 				{SystemX86, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86))},
 				{CommonProgramFiles, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles))},
-				{CommonProgramFilesX86, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86))}
+				{CommonProgramFilesX86, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86))},
+				{Programs, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs))},
+				{MyDocuments, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments))},
+				{Favorites, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Favorites))},
+				{Startup, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup))},
+				{Recent, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Recent))},
+				{SendTo, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SendTo))},
+				{StartMenu, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu))},
+				{MyMusic, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic))},
+				{MyVideos, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos))},
+				{DesktopDirectory, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory))},
 			};
 		}
 
