@@ -66,7 +66,7 @@ namespace DPloy.Distributor
 			var arguments = options.ScriptArguments.ToArray();
 			try
 			{
-				var progressWriter = new ProgressWriter(options.Verbose);
+				var progressWriter = new ConsoleWriter(options.Verbose);
 				return (ExitCode) ScriptRunner.Run(progressWriter, scriptPath, arguments);
 			}
 			catch (ScriptCannotBeAccessedException e)

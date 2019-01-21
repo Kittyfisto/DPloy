@@ -18,10 +18,10 @@ namespace DPloy.Distributor
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-		public static int Run(ProgressWriter progressWriter, string scriptFilePath, string[] scriptArguments)
+		public static int Run(ConsoleWriter consoleWriter, string scriptFilePath, string[] scriptArguments)
 		{
-			var script = LoadAndCompileScript(progressWriter, scriptFilePath);
-			using (var distributor = new Distributor(progressWriter))
+			var script = LoadAndCompileScript(consoleWriter, scriptFilePath);
+			using (var distributor = new Distributor(consoleWriter))
 			{
 				Log.InfoFormat("Executing '{0}'...", scriptFilePath);
 
@@ -101,17 +101,17 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static object LoadAndCompileScript(ProgressWriter progressWriter, string scriptFilePath)
+		private static object LoadAndCompileScript(ConsoleWriter consoleWriter, string scriptFilePath)
 		{
-			var script = LoadScript(progressWriter, scriptFilePath);
-			return CompileScript(progressWriter, scriptFilePath, script);
+			var script = LoadScript(consoleWriter, scriptFilePath);
+			return CompileScript(consoleWriter, scriptFilePath, script);
 		}
 
-		private static string LoadScript(ProgressWriter progressWriter, string scriptFilePath)
+		private static string LoadScript(ConsoleWriter consoleWriter, string scriptFilePath)
 		{
 			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
 
-			var operation = progressWriter.BeginLoadScript(scriptFilePath);
+			var operation = consoleWriter.BeginLoadScript(scriptFilePath);
 
 			string script;
 			try
@@ -129,14 +129,14 @@ namespace DPloy.Distributor
 			return script;
 		}
 
-		private static object CompileScript(ProgressWriter progressWriter, string scriptFilePath, string script)
+		private static object CompileScript(ConsoleWriter consoleWriter, string scriptFilePath, string script)
 		{
 			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
 
 			var evaluator = CSScript.Evaluator;
 			evaluator.ReferenceAssembly(typeof(IDistributor).Assembly);
 
-			var operation = progressWriter.BeginCompileScript(scriptFilePath);
+			var operation = consoleWriter.BeginCompileScript(scriptFilePath);
 
 			try
 			{

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using DPloy.Core.PublicApi;
-using SharpRemote.ServiceDiscovery;
 
 namespace DPloy.Distributor
 {
@@ -10,13 +9,12 @@ namespace DPloy.Distributor
 		: IDistributor
 		, IDisposable
 	{
-		private NetworkServiceDiscoverer _discoverer;
 		private readonly List<NodeClient> _clients;
-		private readonly ProgressWriter _progressWriter;
+		private readonly ConsoleWriter _consoleWriter;
 
-		public Distributor(ProgressWriter progressWriter)
+		public Distributor(ConsoleWriter consoleWriter)
 		{
-			_progressWriter = progressWriter;
+			_consoleWriter = consoleWriter;
 			_clients = new List<NodeClient>();
 		}
 
@@ -25,7 +23,6 @@ namespace DPloy.Distributor
 		public void Dispose()
 		{
 			foreach (var client in _clients) client.Dispose();
-			_discoverer?.Dispose();
 		}
 
 		#endregion
@@ -33,19 +30,17 @@ namespace DPloy.Distributor
 		public INode ConnectTo(string addressOrDomain, int port)
 		{
 			var ep = new IPEndPoint(IPAddress.Parse(addressOrDomain), port);
-			return AddClient(() => NodeClient.Create(_progressWriter, ep));
+			return AddClient(() => NodeClient.Create(_consoleWriter, ep));
 		}
 
 		public INode ConnectTo(string computerName)
 		{
-			if (_discoverer == null)
-				_discoverer = new NetworkServiceDiscoverer();
-			return AddClient(() => NodeClient.Create(_progressWriter, _discoverer, computerName));
+			return AddClient(() => NodeClient.Create(_consoleWriter, computerName));
 		}
 
 		public INode ConnectTo(IPEndPoint ep)
 		{
-			return AddClient(() => NodeClient.Create(_progressWriter, ep));
+			return AddClient(() => NodeClient.Create(_consoleWriter, ep));
 		}
 
 		private INode AddClient(Func<NodeClient> fn)

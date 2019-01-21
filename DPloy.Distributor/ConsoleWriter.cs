@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Text;
+using log4net;
 
 namespace DPloy.Distributor
 {
 	/// <summary>
 	/// </summary>
-	internal sealed class ProgressWriter
+	internal sealed class ConsoleWriter
 	{
+		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
 		private const string CutIndicator = "[...]";
 
 		/// <summary>
@@ -19,7 +24,7 @@ namespace DPloy.Distributor
 		private readonly int _maxStatusWidth;
 		private readonly bool _verbose;
 
-		public ProgressWriter(bool verbose)
+		public ConsoleWriter(bool verbose)
 		{
 			_verbose = verbose;
 			_maxStatusWidth = Math.Max(Operation.Ok.Length, Operation.Error.Length);
@@ -115,14 +120,98 @@ namespace DPloy.Distributor
 		{
 			var template = NodeOperationIndent + "Copying directory '{0}' to '{1}'";
 			var maxLineLength = MaxLineLength;
-			var remamining = MaxLineLength - template.Length + 2 * 3;
+			var remaining = maxLineLength - template.Length + 2 * 3;
 
-			PruneTwoPaths(sourceDirectoryPath, destinationDirectoryPath, remamining,
+			PruneTwoPaths(sourceDirectoryPath, destinationDirectoryPath, remaining,
 			              out var prunedSourcePath,
-			              out var pruntedDestinationPath);
+			              out var prunedDestinationPath);
 
 			var message = new StringBuilder();
-			message.AppendFormat(template, prunedSourcePath, pruntedDestinationPath);
+			message.AppendFormat(template, prunedSourcePath, prunedDestinationPath);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
+		}
+
+		public Operation BeginCreateDirectory(string destinationDirectoryPath)
+		{
+			var template = NodeOperationIndent + "Creating directory '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedDestinationPath = PrunePath(destinationDirectoryPath, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedDestinationPath);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
+		}
+
+		public Operation BeginDeleteDirectory(string destinationDirectoryPath)
+		{
+			var template = NodeOperationIndent + "Deleting directory '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedDestinationPath = PrunePath(destinationDirectoryPath, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedDestinationPath);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
+		}
+
+		public Operation BeginExecuteCommand(string cmd)
+		{
+			var template = NodeOperationIndent + "Executing '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedCommand = PruneEnd(cmd, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedCommand);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
+		}
+
+		public Operation BeginStartService(string serviceName)
+		{
+			Log.InfoFormat("Starting service '{0}'...", serviceName);
+
+			var template = NodeOperationIndent + "Starting service '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedServiceName = PruneEnd(serviceName, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedServiceName);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
+		}
+
+		public Operation BeginStopService(string serviceName)
+		{
+			Log.InfoFormat("Stopping service '{0}'...", serviceName);
+
+			var template = NodeOperationIndent + "Stopping service '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedServiceName = PruneEnd(serviceName, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedServiceName);
+			return new Operation(message.ToString(), maxLineLength, _verbose);
+		}
+
+		public Operation BeginKillProcesses(string processName)
+		{
+			Log.InfoFormat("Killing process(es) '{0}'...", processName);
+
+			var template = NodeOperationIndent + "Killing process(es) '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedServiceName = PruneEnd(processName, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedServiceName);
 			return new Operation(message.ToString(), maxLineLength, _verbose);
 		}
 
@@ -147,15 +236,28 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static string PrunePath(string path, int maxLength)
+		private static string PruneEnd(string cmd, int remaining)
+		{
+			if (cmd.Length > remaining)
+			{
+				var builder = new StringBuilder(remaining);
+				builder.Append(cmd, 0, remaining - CutIndicator.Length);
+				builder.Append(CutIndicator);
+				return builder.ToString();
+			}
+
+			return cmd;
+		}
+
+		public static string PrunePath(string path, int maxLength)
 		{
 			if (path.Length > maxLength)
 			{
 				var cutIndicator = "[...]";
-				var tooMuch = path.Length - maxLength - CutIndicator.Length;
-				var halfTooMuch = tooMuch / 2;
-				var startCut = path.Length / 2 - halfTooMuch;
-				var endCut = startCut + tooMuch - halfTooMuch;
+				var charactersToCut = path.Length - maxLength + CutIndicator.Length;
+
+				var startCut = FindIdealCutPoint(path, charactersToCut);
+				var endCut = startCut + charactersToCut;
 
 				var builder = new StringBuilder(maxLength);
 				builder.Append(path, startIndex: 0, count: startCut);
@@ -166,6 +268,25 @@ namespace DPloy.Distributor
 			}
 
 			return path;
+		}
+
+		private static int FindIdealCutPoint(string path, int charactersToCut)
+		{
+			// We've decided that we need to cut 'charactersToCut' amount of characters from that path.
+			// We assume that the filename is important so it won't be cut unless absolutely necessary!
+			var fileName = Path.GetFileName(path);
+			var remaining = path.Length - fileName.Length - 1;
+			if (remaining >= charactersToCut)
+			{
+				var startCut = path.Length - fileName.Length - charactersToCut - 1;
+				return startCut;
+			}
+			else
+			{
+				var halfTooMuch = charactersToCut / 2;
+				var startCut = path.Length / 2 - halfTooMuch;
+				return startCut;
+			}
 		}
 	}
 }

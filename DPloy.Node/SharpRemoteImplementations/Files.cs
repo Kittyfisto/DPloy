@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using DPloy.Core;
 using DPloy.Core.Hash;
@@ -115,9 +116,75 @@ namespace DPloy.Node.SharpRemoteImplementations
 				stream.Dispose();
 			}
 
-			Log.DebugFormat("Closed '{0}'...", filePath);
+			Log.DebugFormat("Closed '{0}'", filePath);
 
 			return Task.FromResult(42);
+		}
+
+		public Task DeleteDirectoryAsync(string destinationDirectoryPath, bool recursive)
+		{
+			var normalizedPath = Paths.NormalizeAndEvaluate(destinationDirectoryPath);
+
+			Log.DebugFormat("Deleting '{0}'...", normalizedPath);
+
+			DeleteDirectoryPrivate(normalizedPath, recursive);
+
+			Log.DebugFormat("Deleted '{0}'", normalizedPath);
+
+			return Task.FromResult(42);
+		}
+
+		public Task CreateDirectoryAsync(string destinationDirectoryPath)
+		{
+			var normalizedPath = Paths.NormalizeAndEvaluate(destinationDirectoryPath);
+
+			Log.DebugFormat("Creating '{0}'...", normalizedPath);
+
+			Directory.CreateDirectory(normalizedPath);
+
+			Log.DebugFormat("Created '{0}'", normalizedPath);
+
+			return Task.FromResult(42);
+		}
+
+		private static void DeleteDirectoryPrivate(string normalizedPath, bool recursive)
+		{
+			const int maxTries = 3;
+
+			Exception exception = null;
+			for (int i = 0; i < maxTries; ++i)
+			{
+				if (CanDeleteDirectory(normalizedPath, recursive, out exception))
+					return;
+
+				// With every failure we wait a little bit longer...
+				Thread.Sleep(TimeSpan.FromMilliseconds(100 * (i+1)));
+			}
+
+			throw exception ?? new NotImplementedException();
+		}
+
+		private static bool CanDeleteDirectory(string normalizedPath, bool recursive, out Exception exception)
+		{
+			try
+			{
+				Directory.Delete(normalizedPath, recursive);
+
+				exception = null;
+				return true;
+			}
+			catch (DirectoryNotFoundException e)
+			{
+				Log.DebugFormat("Ignoring exception:\r\n{0}", e);
+
+				exception = null;
+				return true;
+			}
+			catch (Exception e)
+			{
+				exception = e;
+				return false;
+			}
 		}
 
 		public byte[] CalculateSha256(string filePath)

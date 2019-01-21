@@ -56,6 +56,8 @@
     <Compile Include="NodeAcceptanceTest.cs" />
     <Compile Include="FileTest.cs" />
     <Compile Include="PathsTest.cs" />
+    <Compile Include="ProcessesTest.cs" />
+    <Compile Include="ProgressWriterTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="app.config" />
     <None Include="Scripts\PrivateStaticMainReturns101.cs" />

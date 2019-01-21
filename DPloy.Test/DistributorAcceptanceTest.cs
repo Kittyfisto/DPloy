@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Text;
+using DPloy.Core;
 using DPloy.Node;
 using FluentAssertions;
 using NUnit.Framework;
@@ -16,7 +17,7 @@ namespace DPloy.Test
 		{
 			using (var node = new NodeServer())
 			{
-				node.Bind(new IPEndPoint(IPAddress.Loopback, 48121));
+				node.Bind(new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort));
 				ExecuteScript("Copy1byte_a.cs").Should().Be(0);
 			}
 		}

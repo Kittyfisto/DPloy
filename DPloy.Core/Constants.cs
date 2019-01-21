@@ -13,6 +13,9 @@ namespace DPloy.Core
 		public static readonly IApplicationConstants Node;
 		public static readonly IApplicationConstants Distributor;
 
+		public static readonly int NetworkServiceDiscoveryPort = 41311;
+		public static readonly int ConnectionPort = 41312;
+
 		static Constants()
 		{
 			FrameworkTitle = "DPloy";

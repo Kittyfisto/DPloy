@@ -8,6 +8,19 @@ using NUnit.Framework;
 namespace DPloy.Test
 {
 	[TestFixture]
+	public sealed class NodeTest
+	{
+		[Test]
+		public void TestGetPathRelativeTo()
+		{
+			NodeClient.GetPathRelativeTo(@"C:\windows\calc.exe", @"C:\windows\").Should().Be("calc.exe");
+			NodeClient.GetPathRelativeTo(@"C:\windows\calc.exe", @"C:\windows").Should().Be("calc.exe");
+			NodeClient.GetPathRelativeTo(@"C:/windows/calc.exe", @"C:/windows").Should().Be("calc.exe");
+			NodeClient.GetPathRelativeTo(@"C:/windows/calc.exe", @"C:/windows/").Should().Be("calc.exe");
+		}
+	}
+
+	[TestFixture]
 	public sealed class NodeAcceptanceTest
 	{
 		private static string GetTestTempDirectory()
@@ -32,10 +45,10 @@ namespace DPloy.Test
 		public void TestExecuteCommand()
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor.Distributor(new ProgressWriter(true)))
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
 			{
 				var ep = node.Bind(IPAddress.Loopback);
-				using (var client = deployer.ConnectTo(ep))
+				using (var client = distributor.ConnectTo(ep))
 				{
 					client.ExecuteCommand("EXIT 101").Should().Be(101);
 				}
@@ -58,10 +71,10 @@ namespace DPloy.Test
 		public void TestCopySeveralFiles()
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor.Distributor(new ProgressWriter(true)))
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
 			{
 				var ep = node.Bind(IPAddress.Loopback);
-				using (var client = deployer.ConnectTo(ep))
+				using (var client = distributor.ConnectTo(ep))
 				{
 					var sourceFileNames = new[] {"1byte_a.txt", "1byte_b.txt", "4k.txt", "Empty.txt"};
 					var sourceFiles = sourceFileNames.Select(x => Path.Combine("TestData", x));
@@ -79,13 +92,49 @@ namespace DPloy.Test
 			}
 		}
 
+		[Test]
+		public void TestCopyDirectoryRecursive()
+		{
+			using (var nodeServer = new Node.NodeServer())
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
+			{
+				var ep = nodeServer.Bind(IPAddress.Loopback);
+				using (var nodeClient = distributor.ConnectTo(ep))
+				{
+					var sourceDirectory = Path.Combine(GetTestTempDirectory(), "source");
+					var filePath1 = Path.Combine(sourceDirectory, "A.txt");
+					var fileContent1 = "Stuff";
+					WriteAllText(filePath1, fileContent1);
+					var filePath2 = Path.Combine(sourceDirectory, "B", "B.txt");
+					var fileContent2 = "Hello, World!";
+					WriteAllText(filePath2, fileContent2);
+
+					var destinationDirectory = Path.Combine(GetTestTempDirectory(), "destination");
+					nodeClient.CopyDirectoryRecursive(sourceDirectory, destinationDirectory);
+
+					var destFilePath1 = Path.Combine(destinationDirectory, "A.txt");
+					File.Exists(destFilePath1).Should().BeTrue();
+
+					var destFilePath2 = Path.Combine(destinationDirectory, "B", "B.txt");
+					File.Exists(destFilePath2).Should().BeTrue();
+				}
+			}
+		}
+
+		private void WriteAllText(string filePath, string fileContent1)
+		{
+			var directory = Path.GetDirectoryName(filePath);
+			Directory.CreateDirectory(directory);
+			File.WriteAllText(filePath, fileContent1);
+		}
+
 		private void TestCopyFile(string fileName)
 		{
 			using (var node = new Node.NodeServer())
-			using (var deployer = new Distributor.Distributor(new ProgressWriter(true)))
+			using (var distributor = new Distributor.Distributor(new ConsoleWriter(true)))
 			{
 				var ep = node.Bind(IPAddress.Loopback);
-				using (var client = deployer.ConnectTo(ep))
+				using (var client = distributor.ConnectTo(ep))
 				{
 					var sourceFilePath = Path.Combine("TestData", fileName);
 					var destinationFilePath = Path.Combine(GetTestTempDirectory(), fileName);

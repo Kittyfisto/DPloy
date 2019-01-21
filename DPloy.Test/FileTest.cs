@@ -166,6 +166,85 @@ namespace DPloy.Test
 			File.ReadAllText(targetFile).Should().Be("Hello, World!");
 		}
 
+		[Test]
+		public void TestDeleteNonExistingDirectory()
+		{
+			var files = new Files();
+
+			var path = Path.Combine(Path.GetTempPath(), "dwaadwdadasdawiodwahjwadjdawwad");
+			new Action(() => files.DeleteDirectoryAsync(path, recursive: false).Wait())
+				.Should().NotThrow();
+		}
+
+		[Test]
+		public void TestDeleteEmptyDirectory()
+		{
+			var files = new Files();
+
+			var path = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "EmptyDirectory");
+			if (Directory.Exists(path))
+				Directory.Delete(path, recursive: true);
+
+			Directory.CreateDirectory(path);
+			Directory.Exists(path).Should().BeTrue();
+
+			files.DeleteDirectoryAsync(path, recursive: false).Wait();
+
+			Directory.Exists(path).Should().BeFalse();
+		}
+
+		[Test]
+		public void TestDeleteNonEmptyDirectory()
+		{
+			var files = new Files();
+
+			var directory = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "NonEmptyDirectory");
+			Directory.CreateDirectory(directory);
+			Directory.Exists(directory).Should().BeTrue();
+
+			var filePath = Path.Combine(directory, "SomeFile.txt");
+			File.WriteAllText(filePath, "Hello!");
+			File.Exists(filePath).Should().BeTrue();
+
+			files.DeleteDirectoryAsync(directory, recursive: true).Wait();
+
+			Directory.Exists(directory).Should().BeFalse();
+			File.Exists(filePath).Should().BeFalse();
+		}
+
+		[Test]
+		public void TestCreateDirectory()
+		{
+			var files = new Files();
+
+			var directory = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "NonExistingDirectory");
+			if (Directory.Exists(directory))
+				Directory.Delete(directory);
+
+			Directory.Exists(directory).Should().BeFalse();
+			files.CreateDirectoryAsync(directory).Wait();
+
+			Directory.Exists(directory).Should().BeTrue();
+		}
+
+		[Test]
+		public void TestCreateExistingDirectory()
+		{
+			var files = new Files();
+
+			var directory = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "ExistingDirectory");
+			Directory.CreateDirectory(directory);
+			var file = Path.Combine(directory, "SomeFile.txt");
+			File.WriteAllText(file, "Hello!");
+
+			Directory.Exists(directory).Should().BeTrue();
+			files.CreateDirectoryAsync(directory).Wait();
+
+			Directory.Exists(directory).Should().BeTrue("because the directory should still exist");
+			File.Exists(file).Should().BeTrue("Because the contents of the directory should not have been deleted");
+			File.ReadAllText(file).Should().Be("Hello!", "Because the contents of the directory should not have been modified");
+		}
+
 		[Pure]
 		private static byte[] CalculateSha256(string filePath)
 		{

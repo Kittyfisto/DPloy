@@ -62,6 +62,22 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		Task CloseFileAsync(string filePath);
 
 		/// <summary>
+		///     Deletes a directory and all of its files.
+		/// </summary>
+		/// <param name="destinationDirectoryPath"></param>
+		/// <param name="recursive">When set to true, sub-directories (and their files and subdirectories) are deleted</param>
+		/// <returns></returns>
+		[Invoke(Dispatch.SerializePerObject)]
+		Task DeleteDirectoryAsync(string destinationDirectoryPath, bool recursive);
+
+		/// <summary>
+		///     Creates a new directory.
+		/// </summary>
+		/// <param name="destinationDirectoryPath"></param>
+		[Invoke(Dispatch.SerializePerObject)]
+		Task CreateDirectoryAsync(string destinationDirectoryPath);
+
+		/// <summary>
 		///     Calculates and returns the hash of the given file using the SHA256 algorithm.
 		/// </summary>
 		/// <param name="filePath"></param>

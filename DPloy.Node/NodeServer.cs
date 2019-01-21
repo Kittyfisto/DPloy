@@ -31,6 +31,7 @@ namespace DPloy.Node
 		private readonly Files _files;
 		private readonly Services _services;
 		private readonly Shell _shell;
+		private readonly Processes _processes;
 		private readonly SocketEndPoint _socket;
 
 		public NodeServer()
@@ -60,6 +61,9 @@ namespace DPloy.Node
 
 			_services = new Services();
 			_socket.CreateServant<IServices>(ObjectIds.Services, _services);
+
+			_processes = new Processes();
+			_socket.CreateServant<IProcesses>(ObjectIds.Processes, _processes);
 		}
 
 		private void LogAllowedHosts(IEnumerable<string> allowedMachineNames)
@@ -76,9 +80,11 @@ namespace DPloy.Node
 		public void Dispose()
 		{
 			// These objects shall be kept alive at least until this method is called!
+			// DO NOT REMOVE THE FOLLOWING CODE
 			GC.KeepAlive(_files);
 			GC.KeepAlive(_shell);
 			GC.KeepAlive(_services);
+			GC.KeepAlive(_processes);
 
 			_socket?.Dispose();
 		}

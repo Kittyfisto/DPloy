@@ -96,7 +96,7 @@
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="Operation.cs" />
-    <Compile Include="ProgressWriter.cs" />
+    <Compile Include="ConsoleWriter.cs" />
     <Compile Include="DeployOptions.cs" />
     <Compile Include="ExampleOptions.cs" />
     <EmbeddedResource Include="Examples\HelloWorld.cs" />
@@ -141,4 +141,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
 </Project>

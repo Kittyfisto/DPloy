@@ -12,7 +12,6 @@ using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteInterfaces;
 using log4net;
 using SharpRemote;
-using SharpRemote.ServiceDiscovery;
 
 namespace DPloy.Distributor
 {
@@ -27,21 +26,23 @@ namespace DPloy.Distributor
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-		private readonly ProgressWriter _progressWriter;
+		private readonly ConsoleWriter _consoleWriter;
 		private readonly IFiles _files;
 		private readonly IShell _shell;
 		private readonly IServices _services;
+		private readonly IProcesses _processes;
 		private readonly SocketEndPoint _socket;
 
 		private const int FilePacketBufferSize = 1024 * 1024 * 4;
 
-		private NodeClient(ProgressWriter progressWriter, SocketEndPoint socket)
+		private NodeClient(ConsoleWriter consoleWriter, SocketEndPoint socket)
 		{
-			_progressWriter = progressWriter;
+			_consoleWriter = consoleWriter;
 			_socket = socket;
 			_files = _socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File);
 			_shell = _socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell);
 			_services = _socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services);
+			_processes = _socket.GetExistingOrCreateNewProxy<IProcesses>(ObjectIds.Processes);
 		}
 
 		#region IDisposable
@@ -51,7 +52,7 @@ namespace DPloy.Distributor
 			var socket = _socket;
 			if (socket != null)
 			{
-				var operation = _progressWriter.BeginDisconnect(socket.RemoteEndPoint);
+				var operation = _consoleWriter.BeginDisconnect(socket.RemoteEndPoint);
 				try
 				{
 					socket.Disconnect();
@@ -70,13 +71,15 @@ namespace DPloy.Distributor
 
 		#endregion
 
-		public static NodeClient Create(ProgressWriter progressWriter, IPEndPoint endPoint)
+		public static NodeClient Create(ConsoleWriter consoleWriter, IPEndPoint endPoint)
 		{
-			var operation = progressWriter.BeginConnect(endPoint.ToString());
+			var operation = consoleWriter.BeginConnect(endPoint.ToString());
 
 			try
 			{
-				return Create(progressWriter, endPoint, operation);
+				var node = CreatePrivate(consoleWriter, endPoint);
+				operation.Success();
+				return node;
 			}
 			catch (Exception e)
 			{
@@ -85,45 +88,40 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static NodeClient Create(ProgressWriter progressWriter, IPEndPoint endPoint, Operation operation)
+		public static NodeClient Create(ConsoleWriter consoleWriter, string computerName)
 		{
-			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
-			                                clientAuthenticator: MachineNameAuthenticator.CreateClient(),
-			                                heartbeatSettings: new HeartbeatSettings
-			                                {
-				                                AllowRemoteHeartbeatDisable = true
-			                                });
+			var operation = consoleWriter.BeginConnect(computerName);
 
 			try
 			{
-				socket.Connect(endPoint);
+				var node = CreatePrivate(consoleWriter, computerName);
 				operation.Success();
-				return new NodeClient(progressWriter, socket);
+				return node;
 			}
-			catch (Exception)
+			catch (Exception e)
 			{
-				socket.Dispose();
+				operation.Failed(e);
 				throw;
 			}
 		}
 
-		public static NodeClient Create(ProgressWriter progressWriter, INetworkServiceDiscoverer discoverer, string computerName)
+		private static NodeClient CreatePrivate(ConsoleWriter consoleWriter, string computerName)
 		{
+			var addresses = Dns.GetHostAddresses(computerName);
+			if (addresses == null || addresses.Length == 0)
+				throw new ArgumentException($"Unable to resolve '{computerName}' to an IPAddress - is this machine reachable?");
+
+			var address = addresses[0];
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
 				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
-				networkServiceDiscoverer: discoverer,
 				heartbeatSettings: new HeartbeatSettings
 				{
 					AllowRemoteHeartbeatDisable = true
 				});
 			try
 			{
-				var serviceName = $"{computerName}.DPloy.Node";
-
-				var services = discoverer.FindServices(serviceName);
-
-				socket.Connect(serviceName);
-				return new NodeClient(progressWriter, socket);
+				socket.Connect(new IPEndPoint(address, Constants.ConnectionPort));
+				return new NodeClient(consoleWriter, socket);
 			}
 			catch (Exception e)
 			{
@@ -132,11 +130,47 @@ namespace DPloy.Distributor
 			}
 		}
 
+		private static NodeClient CreatePrivate(ConsoleWriter consoleWriter, IPEndPoint endPoint)
+		{
+			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
+				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
+				heartbeatSettings: new HeartbeatSettings
+				{
+					AllowRemoteHeartbeatDisable = true
+				});
+
+			try
+			{
+				socket.Connect(endPoint);
+				return new NodeClient(consoleWriter, socket);
+			}
+			catch (Exception)
+			{
+				socket.Dispose();
+				throw;
+			}
+		}
+
 		#region Implementation of IClient
+
+		public void KillProcesses(string processName)
+		{
+			var operation = _consoleWriter.BeginKillProcesses(processName);
+			try
+			{
+				KillProcessesPrivate(processName);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
 
 		public void CopyFile(string sourceFilePath, string destinationFilePath)
 		{
-			var operation = _progressWriter.BeginCopyFile(sourceFilePath, destinationFilePath);
+			var operation = _consoleWriter.BeginCopyFile(sourceFilePath, destinationFilePath);
 			try
 			{
 				CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFilePath);
@@ -151,7 +185,7 @@ namespace DPloy.Distributor
 
 		public void CopyFiles(IEnumerable<string> sourceFiles, string destinationFolder)
 		{
-			var operation = _progressWriter.BeginCopyFiles(sourceFiles.ToList(), destinationFolder);
+			var operation = _consoleWriter.BeginCopyFiles(sourceFiles.ToList(), destinationFolder);
 			try
 			{
 				CopyFilesPrivate(sourceFiles.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
@@ -164,12 +198,57 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
+		public void CreateDirectory(string destinationDirectoryPath)
 		{
-			var operation = _progressWriter.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
+			var operation = _consoleWriter.BeginCreateDirectory(destinationDirectoryPath);
 			try
 			{
-				CopyFilesPrivate(Directory.EnumerateFiles(Paths.NormalizeAndEvaluate(sourceDirectoryPath)), destinationDirectoryPath);
+				CreateDirectoryPrivate(destinationDirectoryPath);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
+		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
+		{
+			var operation = _consoleWriter.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
+			try
+			{
+				CopyFilesPrivate(Directory.EnumerateFiles(Paths.NormalizeAndEvaluate(sourceDirectoryPath)).ToList(), destinationDirectoryPath);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
+		public void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath)
+		{
+			var operation = _consoleWriter.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
+			try
+			{
+				CopyDirectoryRecursivePrivate(Paths.NormalizeAndEvaluate(sourceDirectoryPath), destinationDirectoryPath);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
+		public void DeleteDirectoryRecursive(string destinationDirectoryPath)
+		{
+			var operation = _consoleWriter.BeginDeleteDirectory(destinationDirectoryPath);
+			try
+			{
+				DeleteDirectoryRecursivePrivate(destinationDirectoryPath);
 				operation.Success();
 			}
 			catch (Exception e)
@@ -197,7 +276,11 @@ namespace DPloy.Distributor
 
 		public void Install(string installerPath, string commandLine = null)
 		{
-			InstallPrivate(Paths.NormalizeAndEvaluate(installerPath), commandLine);
+			var destinationPath = Path.Combine(Paths.Temp, "DPloy", "Installers");
+			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
+
+			CopyFile(installerPath, destinationFilePath);
+			ExecuteFile(destinationFilePath, commandLine ?? "/S");
 		}
 
 		public void ExecuteFile(string clientFilePath, string commandLine = null)
@@ -211,25 +294,71 @@ namespace DPloy.Distributor
 		public int ExecuteCommand(string cmd)
 		{
 			Log.InfoFormat("Executing command '{0}'...", cmd);
-
-			return _shell.Execute(cmd);
+			var operation = _consoleWriter.BeginExecuteCommand(cmd);
+			try
+			{
+				var exitCode = ExecuteCommandPrivate(cmd);
+				operation.Success();
+				return exitCode;
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
 		}
 
 		public void StartService(string serviceName)
 		{
-			Log.InfoFormat("Starting service '{0}'...", serviceName);
-
-			_services.Start(serviceName);
+			var operation = _consoleWriter.BeginStartService(serviceName);
+			try
+			{
+				StartServicePrivate(serviceName);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
 		}
 
 		public void StopService(string serviceName)
 		{
-			Log.InfoFormat("Stopping service '{0}'...", serviceName);
-
-			_services.Stop(serviceName);
+			var operation = _consoleWriter.BeginStopService(serviceName);
+			try
+			{
+				StopServicePrivate(serviceName);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
 		}
 
 		#endregion
+
+		private void StartServicePrivate(string serviceName)
+		{
+			_services.Start(serviceName);
+		}
+
+		private void StopServicePrivate(string serviceName)
+		{
+			_services.Stop(serviceName);
+		}
+
+		private void KillProcessesPrivate(string processName)
+		{
+			_processes.KillAll(processName);
+		}
+
+		private int ExecuteCommandPrivate(string cmd)
+		{
+			return _shell.Execute(cmd);
+		}
 
 		private void CopyFilePrivate(string sourceFilePath, string destinationFilePath)
 		{
@@ -244,30 +373,77 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private void InstallPrivate(string installerPath, string commandLine)
+		private void CreateDirectoryPrivate(string destinationDirectoryPath)
 		{
-			var destinationPath = Path.Combine(Paths.Temp, "DPloy", "Installers");
-			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
-
-			CopyFile(installerPath, destinationPath);
-			ExecuteFile(destinationFilePath, commandLine ?? "/S");
+			_files.CreateDirectoryAsync(destinationDirectoryPath).Wait();
 		}
 
-		private void CopyFilesPrivate(IEnumerable<string> sourceFiles, string destinationFolder)
+		private void CopyDirectoryRecursivePrivate(string sourceDirectoryPath, string destinationDirectoryPath)
 		{
+			var sourceFiles = new List<string>();
+			var destinationFiles = new List<string>();
+			foreach (var sourceFilePath in Directory.EnumerateFiles(sourceDirectoryPath, "*.*", SearchOption.AllDirectories))
+			{
+				sourceFiles.Add(sourceFilePath);
+
+				var relativePath = GetPathRelativeTo(sourceFilePath, sourceDirectoryPath);
+				var destinationFilePath = Path.Combine(destinationDirectoryPath, relativePath);
+
+				destinationFiles.Add(destinationFilePath);
+			}
+
+			CopyFilesPrivate(sourceFiles, destinationFiles);
+		}
+
+		[Pure]
+		public static string GetPathRelativeTo(string filePath, string directoryPath)
+		{
+			Uri fullPath = new Uri(filePath, UriKind.Absolute);
+
+			if (!directoryPath.EndsWith("\\") && !directoryPath.EndsWith("/"))
+				directoryPath += '\\';
+
+			Uri relRoot = new Uri(directoryPath, UriKind.Absolute);
+			string relativePath = relRoot.MakeRelativeUri(fullPath).ToString();
+			return relativePath;
+		}
+
+		private void CopyFilesPrivate(IReadOnlyList<string> sourceFiles, string destinationFolder)
+		{
+			var destinationFiles = new List<string>();
+			foreach (var sourceFile in sourceFiles)
+			{
+				destinationFiles.Add(Path.Combine(destinationFolder, Path.GetFileName(sourceFile)));
+			}
+
+			CopyFilesPrivate(sourceFiles, destinationFiles);
+		}
+
+		private void CopyFilesPrivate(IReadOnlyList<string> sourceFiles, IReadOnlyList<string> destinationFiles)
+		{
+			var tmp = new Dictionary<string, string>();
+			for (int i = 0; i < sourceFiles.Count; ++i)
+			{
+				tmp.Add(sourceFiles[i], destinationFiles[i]);
+			}
+
 			var smallFiles = new List<string>();
 			var bigFiles = new List<string>();
 			ClassifyFilesBySize(sourceFiles, smallFiles, bigFiles);
 
 			foreach (var bigFile in bigFiles)
 			{
-				var destinationFilePath = Path.Combine(destinationFolder, Path.GetFileName(bigFile));
+				var destinationFilePath = tmp[bigFile];
 				CopyFilePrivate(bigFile, destinationFilePath);
 			}
 
-			var destinationFilePaths =
-				smallFiles.Select(x => Path.Combine(destinationFolder, Path.GetFileName(x))).ToList();
-			CopyFileBatch(smallFiles, destinationFilePaths);
+			var destinationSmallFilePaths = smallFiles.Select(x => tmp[x]).ToList();
+			CopyFileBatch(smallFiles, destinationSmallFilePaths);
+		}
+
+		private void DeleteDirectoryRecursivePrivate(string destinationDirectoryPath)
+		{
+			_files.DeleteDirectoryAsync(destinationDirectoryPath, recursive: true).Wait();
 		}
 
 		private bool Exists(string destinationFilePath, long expectedFileSize, byte[] expectedHash)

@@ -10,19 +10,7 @@
 		///     The returned object should be disposed of when it is no longer needed.
 		/// </remarks>
 		/// <param name="addressOrDomain"></param>
-		/// <param name="port"></param>
 		/// <returns></returns>
-		INode ConnectTo(string addressOrDomain, int port);
-
-		/// <summary>
-		///     Establishes a connection with the given client and returns an API
-		///     which allows file-system manipulation as well as command execution.
-		/// </summary>
-		/// <remarks>
-		///     The returned object should be disposed of when it is no longer needed.
-		/// </remarks>
-		/// <param name="computerName"></param>
-		/// <returns></returns>
-		INode ConnectTo(string computerName);
+		INode ConnectTo(string addressOrDomain);
 	}
 }
