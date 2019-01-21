@@ -12,8 +12,10 @@ namespace DPloy.Test
 	[TestFixture]
 	public sealed class FileTest
 	{
+		#region Sha256
+
 		[Test]
-		public void TestUnequalHash()
+		public void TestSha256UnequalHash()
 		{
 			var file = new Files();
 			var hashA = file.CalculateSha256(@"TestData\1byte_a.txt");
@@ -23,7 +25,7 @@ namespace DPloy.Test
 		}
 
 		[Test]
-		public void TestEqualHash()
+		public void TestSha256EqualHash()
 		{
 			var file = new Files();
 			var hashA = file.CalculateSha256(@"TestData\1byte_a.txt");
@@ -33,7 +35,7 @@ namespace DPloy.Test
 		}
 
 		[Test]
-		public void TestCalculateHashEmptyFile()
+		public void TestSha256CalculateHashEmptyFile()
 		{
 			var file = new Files();
 			var path = @"TestData\Empty.txt";
@@ -44,7 +46,7 @@ namespace DPloy.Test
 		}
 
 		[Test]
-		public void TestCalculateHash1byteFile()
+		public void TestSha256CalculateHash1byteFile()
 		{
 			var file = new Files();
 			var path = @"TestData\1byte_a.txt";
@@ -55,7 +57,7 @@ namespace DPloy.Test
 		}
 
 		[Test]
-		public void TestCalculateHash4kFile()
+		public void TestSha256CalculateHash4kFile()
 		{
 			var file = new Files();
 			var path = @"TestData\4k.txt";
@@ -63,6 +65,73 @@ namespace DPloy.Test
 			var actualHash = CalculateSha256(path);
 
 			hash.Should().Equal(actualHash);
+		}
+
+		#endregion
+		
+		#region MD5
+
+		[Test]
+		public void TestMD5UnequalHash()
+		{
+			var file = new Files();
+			var hashA = file.CalculateMD5(@"TestData\1byte_a.txt");
+			var hashB = file.CalculateMD5(@"TestData\1byte_b.txt");
+
+			hashA.Should().NotEqual(hashB);
+		}
+
+		[Test]
+		public void TestMD5EqualHash()
+		{
+			var file = new Files();
+			var hashA = file.CalculateMD5(@"TestData\1byte_a.txt");
+			var hashB = file.CalculateMD5(@"TestData\1byte_a.txt");
+
+			hashA.Should().Equal(hashB);
+		}
+
+		[Test]
+		public void TestMD5CalculateHashEmptyFile()
+		{
+			var file = new Files();
+			var path = @"TestData\Empty.txt";
+			var hash = file.CalculateMD5(path);
+			var actualHash = CalculateMD5(path);
+
+			hash.Should().Equal(actualHash);
+		}
+
+		[Test]
+		public void TestMD5CalculateHash1byteFile()
+		{
+			var file = new Files();
+			var path = @"TestData\1byte_a.txt";
+			var hash = file.CalculateSha256(path);
+			var actualHash = CalculateSha256(path);
+
+			hash.Should().Equal(actualHash);
+		}
+
+		[Test]
+		public void TestMD5CalculateHash4kFile()
+		{
+			var file = new Files();
+			var path = @"TestData\4k.txt";
+			var hash = file.CalculateMD5(path);
+			var actualHash = CalculateMD5(path);
+
+			hash.Should().Equal(actualHash);
+		}
+
+		#endregion
+
+		[Test]
+		public void TestDeleteNonExistingFile()
+		{
+			var files = new Files();
+			new Action(() => files.DeleteFileAsync("I don't exist.foo").Wait())
+				.Should().NotThrow("because deleting a file which doesn't exist shouldn't be considered an error");
 		}
 
 		[Test]
@@ -252,6 +321,16 @@ namespace DPloy.Test
 			using (var stream = File.OpenRead(filePath))
 			{
 				return sha.ComputeHash(stream);
+			}
+		}
+
+		[Pure]
+		private static byte[] CalculateMD5(string filePath)
+		{
+			using (var md5 = MD5.Create())
+			using (var stream = File.OpenRead(filePath))
+			{
+				return md5.ComputeHash(stream);
 			}
 		}
 	}

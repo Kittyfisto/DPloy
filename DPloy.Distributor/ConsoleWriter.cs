@@ -55,7 +55,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedScriptFilePath);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginCompileScript(string scriptFilePath)
@@ -67,7 +67,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedScriptFilePath);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginConnect(string destination)
@@ -76,7 +76,7 @@ namespace DPloy.Distributor
 			var maxLineLength = MaxLineLength;
 			var message = new StringBuilder();
 			message.AppendFormat(template, destination);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginDisconnect(IPEndPoint remoteEndPoint)
@@ -85,7 +85,7 @@ namespace DPloy.Distributor
 			var maxLineLength = MaxLineLength;
 			var message = new StringBuilder();
 			message.AppendFormat(template, remoteEndPoint);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginCopyFile(string sourcePath, string destinationPath)
@@ -100,7 +100,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedSourcePath, pruntedDestinationPath);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginCopyFiles(IReadOnlyList<string> sourceFiles, string destinationFolder)
@@ -113,7 +113,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, pruntedDestinationPath);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginCopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
@@ -128,7 +128,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedSourcePath, prunedDestinationPath);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginCreateDirectory(string destinationDirectoryPath)
@@ -141,7 +141,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedDestinationPath);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginDeleteDirectory(string destinationDirectoryPath)
@@ -154,7 +154,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedDestinationPath);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginExecuteCommand(string cmd)
@@ -167,7 +167,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedCommand);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginStartService(string serviceName)
@@ -182,7 +182,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedServiceName);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginStopService(string serviceName)
@@ -197,7 +197,7 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedServiceName);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
 		}
 
 		public Operation BeginKillProcesses(string processName)
@@ -212,7 +212,17 @@ namespace DPloy.Distributor
 
 			var message = new StringBuilder();
 			message.AppendFormat(template, prunedServiceName);
-			return new Operation(message.ToString(), maxLineLength, _verbose);
+			return Create(message.ToString(), maxLineLength);
+		}
+
+		private Operation Create(StringBuilder message, int maxLineLength)
+		{
+			return Create(message.ToString(), maxLineLength);
+		}
+
+		private Operation Create(string message, int maxLineLength)
+		{
+			return new Operation(Console.Out, message, maxLineLength, _verbose);
 		}
 
 		private static void PruneTwoPaths(string path1,

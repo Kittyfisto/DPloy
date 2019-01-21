@@ -99,6 +99,11 @@
     <Compile Include="ConsoleWriter.cs" />
     <Compile Include="DeployOptions.cs" />
     <Compile Include="ExampleOptions.cs" />
+    <Compile Include="SharpRemoteImplementations\FilesWrapper.cs" />
+    <Compile Include="Exceptions\RemoteNodeException.cs" />
+    <Compile Include="SharpRemoteImplementations\ProcessesWrapper.cs" />
+    <Compile Include="SharpRemoteImplementations\ServicesWrapper.cs" />
+    <Compile Include="SharpRemoteImplementations\ShellWrapper.cs" />
     <EmbeddedResource Include="Examples\HelloWorld.cs" />
     <Compile Include="Exceptions\ScriptCompilationException.cs" />
     <Compile Include="Exceptions\ScriptExecutionException.cs" />

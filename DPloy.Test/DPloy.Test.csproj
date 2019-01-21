@@ -55,6 +55,7 @@
     <Compile Include="DistributorAcceptanceTest.cs" />
     <Compile Include="NodeAcceptanceTest.cs" />
     <Compile Include="FileTest.cs" />
+    <Compile Include="OperationTest.cs" />
     <Compile Include="PathsTest.cs" />
     <Compile Include="ProcessesTest.cs" />
     <Compile Include="ProgressWriterTest.cs" />

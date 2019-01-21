@@ -10,6 +10,7 @@ using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteInterfaces;
+using DPloy.Distributor.SharpRemoteImplementations;
 using log4net;
 using SharpRemote;
 
@@ -35,14 +36,19 @@ namespace DPloy.Distributor
 
 		private const int FilePacketBufferSize = 1024 * 1024 * 4;
 
-		private NodeClient(ConsoleWriter consoleWriter, SocketEndPoint socket)
+		private NodeClient(ConsoleWriter consoleWriter, SocketEndPoint socket, string remoteMachineName)
 		{
 			_consoleWriter = consoleWriter;
 			_socket = socket;
-			_files = _socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File);
-			_shell = _socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell);
-			_services = _socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services);
-			_processes = _socket.GetExistingOrCreateNewProxy<IProcesses>(ObjectIds.Processes);
+
+			_files = new FilesWrapper(_socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File),
+			                          remoteMachineName);
+			_shell = new ShellWrapper(_socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell),
+			                          remoteMachineName);
+			_services = new ServicesWrapper(_socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services),
+			                                remoteMachineName);
+			_processes = new ProcessesWrapper(_socket.GetExistingOrCreateNewProxy<IProcesses>(ObjectIds.Processes),
+			                                  remoteMachineName);
 		}
 
 		#region IDisposable
@@ -121,7 +127,7 @@ namespace DPloy.Distributor
 			try
 			{
 				socket.Connect(new IPEndPoint(address, Constants.ConnectionPort));
-				return new NodeClient(consoleWriter, socket);
+				return new NodeClient(consoleWriter, socket, computerName);
 			}
 			catch (Exception e)
 			{
@@ -142,7 +148,7 @@ namespace DPloy.Distributor
 			try
 			{
 				socket.Connect(endPoint);
-				return new NodeClient(consoleWriter, socket);
+				return new NodeClient(consoleWriter, socket, endPoint.ToString());
 			}
 			catch (Exception)
 			{
