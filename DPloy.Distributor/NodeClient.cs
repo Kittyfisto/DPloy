@@ -32,6 +32,7 @@ namespace DPloy.Distributor
 		private readonly IShell _shell;
 		private readonly IServices _services;
 		private readonly IProcesses _processes;
+		private readonly INetwork _network;
 		private readonly SocketEndPoint _socket;
 
 		private const int FilePacketBufferSize = 1024 * 1024 * 4;
@@ -48,6 +49,8 @@ namespace DPloy.Distributor
 			_services = new ServicesWrapper(_socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services),
 			                                remoteMachineName);
 			_processes = new ProcessesWrapper(_socket.GetExistingOrCreateNewProxy<IProcesses>(ObjectIds.Processes),
+			                                  remoteMachineName);
+			_network = new NetworkWrapper(_socket.GetExistingOrCreateNewProxy<INetwork>(ObjectIds.Network),
 			                                  remoteMachineName);
 		}
 
@@ -165,6 +168,21 @@ namespace DPloy.Distributor
 			try
 			{
 				KillProcessesPrivate(processName);
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
+		public void DownloadFile(string sourceFileUri, string destinationFilePath)
+		{
+			var operation = _consoleWriter.BeginDownloadFile(sourceFileUri, destinationFilePath);
+			try
+			{
+				DownloadFilePrivate(sourceFileUri, destinationFilePath);
 				operation.Success();
 			}
 			catch (Exception e)
@@ -494,6 +512,11 @@ namespace DPloy.Distributor
 		private void DeleteFilePrivate(string destinationFilePath)
 		{
 			_files.DeleteFileAsync(destinationFilePath).Wait();
+		}
+
+		private void DownloadFilePrivate(string sourceFileUri, string destinationDirectory)
+		{
+			_network.DownloadFileAsync(sourceFileUri, destinationDirectory).Wait();
 		}
 
 		private void CreateFilePrivate(string destinationFilePath, byte[] content)

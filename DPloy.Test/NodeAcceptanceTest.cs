@@ -68,6 +68,18 @@ namespace DPloy.Test
 		}
 
 		[Test]
+		public void TestDownloadFile()
+		{
+			var filePath = Path.Combine(GetTestTempDirectory(), "www.google.de", "index.html");
+			File.Exists(filePath).Should().BeFalse();
+
+			_nodeClient.DownloadFile("http://www.google.de/index.html", filePath);
+
+			File.Exists(filePath).Should().BeTrue();
+			new FileInfo(filePath).Length.Should().BeGreaterThan(0);
+		}
+
+		[Test]
 		public void TestCopySeveralFiles()
 		{
 			var sourceFileNames = new[] {"1byte_a.txt", "1byte_b.txt", "4k.txt", "Empty.txt"};

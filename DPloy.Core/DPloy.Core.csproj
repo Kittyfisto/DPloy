@@ -52,6 +52,7 @@
     <Compile Include="SharpRemoteInterfaces\CreateFile.cs" />
     <Compile Include="SharpRemoteInterfaces\FileBatch.cs" />
     <Compile Include="SharpRemoteInterfaces\IFiles.cs" />
+    <Compile Include="SharpRemoteInterfaces\INetwork.cs" />
     <Compile Include="SharpRemoteInterfaces\IProcesses.cs" />
     <Compile Include="SharpRemoteInterfaces\IServices.cs" />
     <Compile Include="SharpRemoteInterfaces\IShell.cs" />

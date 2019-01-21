@@ -101,6 +101,7 @@
     <Compile Include="ExampleOptions.cs" />
     <Compile Include="SharpRemoteImplementations\FilesWrapper.cs" />
     <Compile Include="Exceptions\RemoteNodeException.cs" />
+    <Compile Include="SharpRemoteImplementations\NetworkWrapper.cs" />
     <Compile Include="SharpRemoteImplementations\ProcessesWrapper.cs" />
     <Compile Include="SharpRemoteImplementations\ServicesWrapper.cs" />
     <Compile Include="SharpRemoteImplementations\ShellWrapper.cs" />

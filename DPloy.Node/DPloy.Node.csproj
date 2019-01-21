@@ -56,6 +56,7 @@
     <Compile Include="SharpRemoteImplementations\Files.cs" />
     <Compile Include="Application.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SharpRemoteImplementations\Network.cs" />
     <Compile Include="SharpRemoteImplementations\Processes.cs" />
     <Compile Include="SharpRemoteImplementations\Services.cs" />
     <Compile Include="SharpRemoteImplementations\Shell.cs" />

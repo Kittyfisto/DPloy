@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace DPloy.Core.PublicApi
 {
@@ -16,8 +17,6 @@ namespace DPloy.Core.PublicApi
 	///     Parameters such as 'destinationFilePath' refer to a path on the node (i.e. the connected remote computer).
 	/// </remarks>
 	/// <remarks>
-	///     TODO: Introduce API methods to copy a folder (recursively) as well as an array of files
-	///     TODO: Introduce API methods to download files from a webserver (e.g. the latest build from jenkins, for example)
 	///     TODO: Introduce API toggles to force copy files, if desired (maybe these don't need to be performed on a per-method
 	///     basis but maybe per node)
 	/// </remarks>
@@ -43,6 +42,17 @@ namespace DPloy.Core.PublicApi
 		/// </summary>
 		/// <param name="processName"></param>
 		void KillProcesses(string processName);
+
+		#endregion
+
+		#region Networking
+
+		/// <summary>
+		///     Downloads a file onto this node.
+		/// </summary>
+		/// <param name="sourceFileUri"></param>
+		/// <param name="destinationFilePath"></param>
+		void DownloadFile(string sourceFileUri, string destinationFilePath);
 
 		#endregion
 

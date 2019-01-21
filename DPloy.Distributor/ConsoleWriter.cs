@@ -170,6 +170,22 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
+		public Operation BeginDownloadFile(string sourceFileUri, string destinationDirectory)
+		{
+			var template = NodeOperationIndent + "Downloading '{0}' to '{1}'";
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 2 * 3;
+
+			PruneTwoPaths(sourceFileUri, destinationDirectory,
+			              remaining,
+			              out var prunedSourceFile,
+			              out var prunedDestinationDirectory);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedSourceFile, prunedDestinationDirectory);
+			return CreateOperation(message, maxLineLength);
+		}
+
 		public Operation BeginCreateFile(string destinationFilePath)
 		{
 			var template = NodeOperationIndent + "Creating file '{0}'";
