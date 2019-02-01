@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using csscript;
 using CSScriptLibrary;
 using DPloy.Core.PublicApi;
@@ -103,30 +105,67 @@ namespace DPloy.Distributor
 
 		private static object LoadAndCompileScript(ConsoleWriter consoleWriter, string scriptFilePath)
 		{
-			var script = LoadScript(consoleWriter, scriptFilePath);
+			var script = LoadAndPreprocessScript(consoleWriter, scriptFilePath);
 			return CompileScript(consoleWriter, scriptFilePath, script);
 		}
 
-		private static string LoadScript(ConsoleWriter consoleWriter, string scriptFilePath)
+		private static string LoadAndPreprocessScript(ConsoleWriter consoleWriter, string scriptFilePath)
 		{
-			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
+			Log.InfoFormat("Loading '{0}'...", scriptFilePath);
 
 			var operation = consoleWriter.BeginLoadScript(scriptFilePath);
 
 			string script;
 			try
 			{
-				script = File.ReadAllText(scriptFilePath);
+				using (var taskScheduler = new SerialTaskScheduler())
+				{
+					var filesystem = new Filesystem(taskScheduler);
+					var processor = new ScriptPreprocessor(filesystem);
+					script = processor.ProcessFileAsync(scriptFilePath, new string[0]).Result;
+				}
+
 				operation.Success();
 			}
-			catch (IOException e)
+			catch(AggregateException e)
 			{
-				var tmp = new ScriptCannotBeAccessedException(e.Message, e);
-				operation.Failed(tmp);
-				throw tmp;
+				var exceptions = Unpack(e);
+				if (exceptions.Count == 1)
+				{
+					var exception = exceptions.First();
+
+					operation.Failed(exception);
+					throw exception;
+				}
+
+				operation.Failed(e);
+				throw;
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
 			}
 
 			return script;
+		}
+
+		private static IReadOnlyList<Exception> Unpack(AggregateException aggregateException)
+		{
+			var exceptions = new List<Exception>();
+			foreach (var exception in aggregateException.InnerExceptions)
+			{
+				if (exception is AggregateException innerAggregateException)
+				{
+					exceptions.AddRange(Unpack(innerAggregateException));
+				}
+				else
+				{
+					exceptions.Add(exception);
+				}
+			}
+
+			return exceptions;
 		}
 
 		private static object CompileScript(ConsoleWriter consoleWriter, string scriptFilePath, string script)

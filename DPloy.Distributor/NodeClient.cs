@@ -42,7 +42,7 @@ namespace DPloy.Distributor
 			_consoleWriter = consoleWriter;
 			_socket = socket;
 
-			//ThrowIfIncompatible(socket);
+			ThrowIfIncompatible(socket);
 
 			_files = new FilesWrapper(_socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File),
 			                          remoteMachineName);
@@ -63,6 +63,7 @@ namespace DPloy.Distributor
 
 			var interfaces = socket.GetExistingOrCreateNewProxy<IInterfaces>(ObjectIds.Interface);
 			var actualTypeModel = interfaces.GetTypeModel();
+			actualTypeModel.TryResolveTypes();
 			foreach (var expectedInterface in expectedInterfaces)
 			{
 				ThrowIfIncompatible(expectedInterface, actualTypeModel);

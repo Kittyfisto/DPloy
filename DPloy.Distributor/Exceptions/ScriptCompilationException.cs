@@ -10,6 +10,11 @@ namespace DPloy.Distributor.Exceptions
 		private readonly IReadOnlyList<string> _warnings;
 		private readonly IReadOnlyList<string> _errors;
 
+		public ScriptCompilationException(params string[] errors)
+		{
+			_errors = errors;
+		}
+
 		public ScriptCompilationException(CompilerException e)
 			: base(e.Message, e)
 		{
