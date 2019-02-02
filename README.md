@@ -1,6 +1,10 @@
 # DPloy
 Tool to distribute software to remote computers.
 
+# Why?
+
+You want to regularly deploy software (for example your local build of a software you're working on) to one or more remote machines and are sick and tired of performing those steps manually.
+
 # Quick Start
 Deployment script 'MyDeployment.cs':
 ```
