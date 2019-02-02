@@ -4,7 +4,7 @@ namespace DPloy.Test.Scripts
 {
 	public class Deployment
 	{
-		int Main(IDistributor distributor)
+		int Run(string[] args)
 		{
 			return 42;
 		}

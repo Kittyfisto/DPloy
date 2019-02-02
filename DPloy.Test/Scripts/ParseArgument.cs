@@ -2,7 +2,7 @@
 
 public class Deployment
 {
-	public int Main(IDistributor distributor, string[] args)
+	public int Run(string[] args)
 	{
 		return int.Parse(args[0]);
 	}

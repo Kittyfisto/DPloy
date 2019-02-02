@@ -98,11 +98,13 @@
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="IDistributor.cs" />
     <Compile Include="Operation.cs" />
     <Compile Include="ConsoleWriter.cs" />
-    <Compile Include="DeployOptions.cs" />
-    <Compile Include="ExampleOptions.cs" />
+    <Compile Include="Options\DeployOptions.cs" />
+    <Compile Include="Options\ExampleOptions.cs" />
     <Compile Include="PreprocessorContext.cs" />
+    <Compile Include="Options\RunOptions.cs" />
     <Compile Include="ScriptPreprocessor.cs" />
     <Compile Include="SharpRemoteImplementations\FilesWrapper.cs" />
     <Compile Include="Exceptions\RemoteNodeException.cs" />

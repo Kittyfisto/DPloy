@@ -2,7 +2,7 @@
 
 public class Deployment
 {
-	public int Main(IDistributor distributor)
+	public int Run(string[] args)
 	{
 		return 1337;
 	}

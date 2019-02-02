@@ -4,23 +4,37 @@ using DPloy.Core.PublicApi;
 public class Deployment
 {
 	/// <summary>
-	///     The main entry point of this script.
+	///     The main deployment entry point of this script.
 	///     This method is called by Distributor.exe
 	///     and is meant to contain the code to deploy software on remote machines.
 	/// </summary>
-	/// <param name="distributor">
-	///     A reference to a distributor object which allows you to establish
-	///     connections to remote machines where Node.exe is currently running
+	/// <param name="node">
+	///     A reference to a remote node. It offers methods such as:
+	/// 
+	///     - void Install(string installerPath, string commandLine = null);
+	///     - void ExecuteFile(string clientFilePath, string commandLine = null);
+	///     - int ExecuteCommand(string cmd);
+	///
+	///     - void KillProcesses(string processName);
+	/// 
+	///     - void CreateFile(string destinationFilePath, byte[] content);
+	///     - void CopyFile(string sourceFilePath, string destinationFilePath)
+	///     - void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder);
+	///     - void DeleteFile(string destinationFilePath);
+	///     - void CreateDirectory(string destinationDirectoryPath);
+	///     - void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath);
+	///     - void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath);
+	///     - void DeleteDirectoryRecursive(string destinationDirectoryPath);
+	///     - void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder);
+	///
+	///     - void StartService(string serviceName);
+	///     - void StopService(string serviceName);
 	/// </param>
-	public static void Main(IDistributor distributor)
+	public static void Deploy(INode node)
 	{
-		// An INode is an interface which allows you to copy files and execute commands
-		// on a remote machine: In this case we're connecting a computer by its IPAddress
-		// and port.
-		using (INode node = distributor.ConnectTo("1.2.3.4", 1234))
-		{
-			// Copying files is done by specifying the source file path and the destination *directory*.
-			node.CopyFile("HelloWorld.cs", @"%temp%\");
-		}
+		// Copying files is done by specifying the source file path and the destination *directory*.
+		// The source file path always refers to a file path on the local machine (where Distributor.exe is running)
+		// The destination file path always refers to a file path on the remote node (where Node.exe is running)
+		node.CopyFile("HelloWorld.cs", @"%temp%\");
 	}
 }

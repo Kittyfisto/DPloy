@@ -179,8 +179,7 @@ namespace DPloy.Core.PublicApi
 		/// </remarks>
 		/// <param name="sourceArchivePath">The path to an archive on the distributor's machine</param>
 		/// <param name="destinationFolder">A path on the node's machine where the contents of the archive shall be extracted</param>
-		void CopyAndUnzipArchive(string sourceArchivePath,
-			string destinationFolder);
+		void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder);
 
 		#endregion
 

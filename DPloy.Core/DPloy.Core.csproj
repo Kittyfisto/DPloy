@@ -48,7 +48,6 @@
     <Compile Include="IApplicationConstants.cs" />
     <Compile Include="MachineNameAuthenticator.cs" />
     <Compile Include="Paths.cs" />
-    <Compile Include="PublicApi\IDistributor.cs" />
     <Compile Include="SharpRemoteInterfaces\CreateFile.cs" />
     <Compile Include="SharpRemoteInterfaces\FileBatch.cs" />
     <Compile Include="SharpRemoteInterfaces\IFiles.cs" />

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using DPloy.Core;
 using DPloy.Core.PublicApi;
 
 namespace DPloy.Distributor

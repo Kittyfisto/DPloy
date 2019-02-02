@@ -1,4 +1,6 @@
-﻿namespace DPloy.Core.PublicApi
+﻿using DPloy.Core.PublicApi;
+
+namespace DPloy.Distributor
 {
 	public interface IDistributor
 	{
