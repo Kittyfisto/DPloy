@@ -112,6 +112,7 @@
     <Compile Include="SharpRemoteImplementations\ProcessesWrapper.cs" />
     <Compile Include="SharpRemoteImplementations\ServicesWrapper.cs" />
     <Compile Include="SharpRemoteImplementations\ShellWrapper.cs" />
+    <Compile Include="TaskList.cs" />
     <EmbeddedResource Include="Examples\HelloWorld.cs" />
     <Compile Include="Exceptions\ScriptCompilationException.cs" />
     <Compile Include="Exceptions\ScriptExecutionException.cs" />

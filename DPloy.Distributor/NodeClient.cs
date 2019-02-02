@@ -36,6 +36,8 @@ namespace DPloy.Distributor
 		private readonly SocketEndPoint _socket;
 
 		private const int FilePacketBufferSize = 1024 * 1024 * 4;
+		private const int MaxParallelBatchTasks = 20;
+		private const int MaxParallelCopyTasks = 20;
 
 		private NodeClient(ConsoleWriter consoleWriter, SocketEndPoint socket, string remoteMachineName)
 		{
@@ -664,11 +666,8 @@ namespace DPloy.Distributor
 			using (var sourceStream = File.OpenRead(sourceFilePath))
 			{
 				var fileSize = sourceStream.Length;
-				var tasks = new List<Task>
-				{
-					_files.OpenFileAsync(destinationFilePath, fileSize)
-				};
-
+				var tasks = new TaskList(maxPending: MaxParallelCopyTasks);
+				tasks.Add(_files.OpenFileAsync(destinationFilePath, fileSize));
 
 				var buffer = new byte[FilePacketBufferSize];
 
@@ -684,7 +683,7 @@ namespace DPloy.Distributor
 
 				tasks.Add(_files.CloseFileAsync(destinationFilePath));
 
-				Task.WaitAll(tasks.ToArray());
+				tasks.WaitAll();
 				var clientHash = _files.CalculateMD5(destinationFilePath);
 				if (!HashCodeCalculator.AreEqual(thisHash, clientHash))
 					throw new
@@ -694,7 +693,7 @@ namespace DPloy.Distributor
 
 		private void CopyFileBatch(IReadOnlyList<string> sourceFilePaths, IReadOnlyList<string> destinationFilePaths)
 		{
-			var tasks = new List<Task>();
+			var tasks = new TaskList(maxPending: MaxParallelBatchTasks);
 
 			var batch = new FileBatch();
 			long length = 0;
@@ -726,7 +725,7 @@ namespace DPloy.Distributor
 				tasks.Add(_files.ExecuteBatchAsync(batch));
 			}
 
-			Task.WaitAll(tasks.ToArray());
+			tasks.WaitAll();
 		}
 	}
 }
