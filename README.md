@@ -35,3 +35,7 @@ Connecting to '192.0.2.0'                                               [  OK  ]
 Disconnecting from '192.0.2.0:41312'                                    [  OK  ] 
 Disconnecting from ''                                                   [  OK  ] 
 ```
+
+# Documentation
+
+Check out [INode.cs](DPloy.Core/PublicApi/INode.cs) to find a listing of the methods you can use in a script.
