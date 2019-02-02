@@ -1,6 +1,10 @@
 # DPloy
 Tool to distribute software to remote computers.
 
+# A warning
+
+**Connections between Distributor.exe and Node.exe are NOT secured IN ANY WAY. You SHOULD NOT use this over an insecure network and especially NOT over the internet.** This will be fixed with https://github.com/Kittyfisto/DPloy/issues/4, but that time has not come yet.
+
 # Why?
 
 You want to regularly deploy software (for example your local build of a software you're working on) to one or more remote machines and are sick and tired of performing those steps manually.
