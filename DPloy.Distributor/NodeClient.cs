@@ -10,6 +10,7 @@ using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteInterfaces;
+using DPloy.Distributor.Output;
 using DPloy.Distributor.SharpRemoteImplementations;
 using log4net;
 using SharpRemote;
@@ -27,7 +28,7 @@ namespace DPloy.Distributor
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-		private readonly ConsoleWriter _consoleWriter;
+		private readonly IOperationTracker _operationTracker;
 		private readonly IFiles _files;
 		private readonly IShell _shell;
 		private readonly IServices _services;
@@ -39,9 +40,9 @@ namespace DPloy.Distributor
 		private const int MaxParallelBatchTasks = 20;
 		private const int MaxParallelCopyTasks = 20;
 
-		private NodeClient(ConsoleWriter consoleWriter, SocketEndPoint socket, string remoteMachineName)
+		private NodeClient(IOperationTracker operationTracker, SocketEndPoint socket, string remoteMachineName)
 		{
-			_consoleWriter = consoleWriter;
+			_operationTracker = operationTracker;
 			_socket = socket;
 
 			ThrowIfIncompatible(socket);
@@ -123,7 +124,7 @@ namespace DPloy.Distributor
 			var socket = _socket;
 			if (socket != null)
 			{
-				var operation = _consoleWriter.BeginDisconnect(socket.RemoteEndPoint);
+				var operation = _operationTracker.BeginDisconnect(socket.RemoteEndPoint);
 				try
 				{
 					socket.Disconnect();
@@ -142,13 +143,13 @@ namespace DPloy.Distributor
 
 		#endregion
 
-		public static NodeClient Create(ConsoleWriter consoleWriter, IPEndPoint endPoint)
+		public static NodeClient Create(IOperationTracker operationTracker, IPEndPoint endPoint)
 		{
-			var operation = consoleWriter.BeginConnect(endPoint.ToString());
+			var operation = operationTracker.BeginConnect(endPoint.ToString());
 
 			try
 			{
-				var node = CreatePrivate(consoleWriter, endPoint);
+				var node = CreatePrivate(operationTracker, endPoint);
 				operation.Success();
 				return node;
 			}
@@ -159,13 +160,13 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public static NodeClient Create(ConsoleWriter consoleWriter, string computerName)
+		public static NodeClient Create(IOperationTracker operationTracker, string address)
 		{
-			var operation = consoleWriter.BeginConnect(computerName);
+			var operation = operationTracker.BeginConnect(address);
 
 			try
 			{
-				var node = CreatePrivate(consoleWriter, computerName);
+				var node = CreatePrivate(operationTracker, address);
 				operation.Success();
 				return node;
 			}
@@ -176,13 +177,8 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static NodeClient CreatePrivate(ConsoleWriter consoleWriter, string computerName)
+		private static NodeClient CreatePrivate(IOperationTracker operationTracker, string address)
 		{
-			var addresses = Dns.GetHostAddresses(computerName);
-			if (addresses == null || addresses.Length == 0)
-				throw new ArgumentException($"Unable to resolve '{computerName}' to an IPAddress - is this machine reachable?");
-
-			var address = addresses[0];
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
 				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
 				heartbeatSettings: new HeartbeatSettings
@@ -191,8 +187,8 @@ namespace DPloy.Distributor
 				});
 			try
 			{
-				socket.Connect(new IPEndPoint(address, Constants.ConnectionPort));
-				return new NodeClient(consoleWriter, socket, computerName);
+				Connect(socket, address);
+				return new NodeClient(operationTracker, socket, address);
 			}
 			catch (Exception e)
 			{
@@ -201,7 +197,54 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static NodeClient CreatePrivate(ConsoleWriter consoleWriter, IPEndPoint endPoint)
+		private static void Connect(SocketEndPoint socket, string address)
+		{
+			if (TryParseIPEndPoint(address, out var ipEndPoint))
+			{
+				socket.Connect(ipEndPoint);
+			}
+			else if (IPAddress.TryParse(address, out var ipAddress))
+			{
+				socket.Connect(new IPEndPoint(ipAddress, Constants.ConnectionPort));
+			}
+			else
+			{
+				var addresses = Dns.GetHostAddresses(address);
+				if (addresses == null || addresses.Length == 0)
+					throw new ArgumentException($"Unable to resolve '{address}' to an IPAddress - is this machine reachable?");
+
+				socket.Connect(new IPEndPoint(addresses[0], Constants.ConnectionPort));
+			}
+		}
+
+		private static bool TryParseIPEndPoint(string address, out IPEndPoint ipEndPoint)
+		{
+			int idx = address.IndexOf(':');
+			if (idx == -1)
+			{
+				ipEndPoint = null;
+				return false;
+			}
+
+			var ipPart = address.Substring(0, idx);
+			var portPart = address.Substring(idx + 1);
+			if (!IPAddress.TryParse(ipPart, out var ipAddress))
+			{
+				ipEndPoint = null;
+				return false;
+			}
+
+			if (!int.TryParse(portPart, out var port))
+			{
+				ipEndPoint = null;
+				return false;
+			}
+
+			ipEndPoint = new IPEndPoint(ipAddress, port);
+			return true;
+		}
+
+		private static NodeClient CreatePrivate(IOperationTracker operationTracker, IPEndPoint endPoint)
 		{
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
 				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
@@ -213,7 +256,7 @@ namespace DPloy.Distributor
 			try
 			{
 				socket.Connect(endPoint);
-				return new NodeClient(consoleWriter, socket, endPoint.ToString());
+				return new NodeClient(operationTracker, socket, endPoint.ToString());
 			}
 			catch (Exception)
 			{
@@ -226,7 +269,7 @@ namespace DPloy.Distributor
 
 		public void KillProcesses(string processName)
 		{
-			var operation = _consoleWriter.BeginKillProcesses(processName);
+			var operation = _operationTracker.BeginKillProcesses(processName);
 			try
 			{
 				KillProcessesPrivate(processName);
@@ -241,7 +284,7 @@ namespace DPloy.Distributor
 
 		public void DownloadFile(string sourceFileUri, string destinationFilePath)
 		{
-			var operation = _consoleWriter.BeginDownloadFile(sourceFileUri, destinationFilePath);
+			var operation = _operationTracker.BeginDownloadFile(sourceFileUri, destinationFilePath);
 			try
 			{
 				DownloadFilePrivate(sourceFileUri, destinationFilePath);
@@ -256,7 +299,7 @@ namespace DPloy.Distributor
 
 		public void CreateFile(string destinationFilePath, byte[] content)
 		{
-			var operation = _consoleWriter.BeginCreateFile(destinationFilePath);
+			var operation = _operationTracker.BeginCreateFile(destinationFilePath);
 			try
 			{
 				CreateFilePrivate(destinationFilePath, content);
@@ -271,7 +314,7 @@ namespace DPloy.Distributor
 
 		public void CopyFile(string sourceFilePath, string destinationFilePath)
 		{
-			var operation = _consoleWriter.BeginCopyFile(sourceFilePath, destinationFilePath);
+			var operation = _operationTracker.BeginCopyFile(sourceFilePath, destinationFilePath);
 			try
 			{
 				CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFilePath);
@@ -286,7 +329,7 @@ namespace DPloy.Distributor
 
 		public void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder)
 		{
-			var operation = _consoleWriter.BeginCopyFiles(sourceFilePaths.ToList(), destinationFolder);
+			var operation = _operationTracker.BeginCopyFiles(sourceFilePaths.ToList(), destinationFolder);
 			try
 			{
 				CopyFilesPrivate(sourceFilePaths.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
@@ -301,7 +344,7 @@ namespace DPloy.Distributor
 
 		public void CreateDirectory(string destinationDirectoryPath)
 		{
-			var operation = _consoleWriter.BeginCreateDirectory(destinationDirectoryPath);
+			var operation = _operationTracker.BeginCreateDirectory(destinationDirectoryPath);
 			try
 			{
 				CreateDirectoryPrivate(destinationDirectoryPath);
@@ -316,7 +359,7 @@ namespace DPloy.Distributor
 
 		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
 		{
-			var operation = _consoleWriter.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
+			var operation = _operationTracker.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
 			try
 			{
 				var sourceFiles = Directory.EnumerateFiles(Paths.NormalizeAndEvaluate(sourceDirectoryPath)).ToList();
@@ -340,7 +383,7 @@ namespace DPloy.Distributor
 
 		public void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath)
 		{
-			var operation = _consoleWriter.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
+			var operation = _operationTracker.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
 			try
 			{
 				CopyDirectoryRecursivePrivate(Paths.NormalizeAndEvaluate(sourceDirectoryPath), destinationDirectoryPath);
@@ -355,7 +398,7 @@ namespace DPloy.Distributor
 
 		public void DeleteDirectoryRecursive(string destinationDirectoryPath)
 		{
-			var operation = _consoleWriter.BeginDeleteDirectory(destinationDirectoryPath);
+			var operation = _operationTracker.BeginDeleteDirectory(destinationDirectoryPath);
 			try
 			{
 				DeleteDirectoryRecursivePrivate(destinationDirectoryPath);
@@ -370,7 +413,7 @@ namespace DPloy.Distributor
 
 		public void DeleteFile(string destinationFilePath)
 		{
-			var operation = _consoleWriter.BeginDeleteFile(destinationFilePath);
+			var operation = _operationTracker.BeginDeleteFile(destinationFilePath);
 			try
 			{
 				DeleteFilePrivate(destinationFilePath);
@@ -419,7 +462,7 @@ namespace DPloy.Distributor
 		public int ExecuteCommand(string cmd)
 		{
 			Log.InfoFormat("Executing command '{0}'...", cmd);
-			var operation = _consoleWriter.BeginExecuteCommand(cmd);
+			var operation = _operationTracker.BeginExecuteCommand(cmd);
 			try
 			{
 				var exitCode = ExecuteCommandPrivate(cmd);
@@ -435,7 +478,7 @@ namespace DPloy.Distributor
 
 		public void StartService(string serviceName)
 		{
-			var operation = _consoleWriter.BeginStartService(serviceName);
+			var operation = _operationTracker.BeginStartService(serviceName);
 			try
 			{
 				StartServicePrivate(serviceName);
@@ -450,7 +493,7 @@ namespace DPloy.Distributor
 
 		public void StopService(string serviceName)
 		{
-			var operation = _consoleWriter.BeginStopService(serviceName);
+			var operation = _operationTracker.BeginStopService(serviceName);
 			try
 			{
 				StopServicePrivate(serviceName);

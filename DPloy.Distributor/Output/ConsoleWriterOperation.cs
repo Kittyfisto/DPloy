@@ -2,9 +2,10 @@
 using System.IO;
 using DPloy.Distributor.Exceptions;
 
-namespace DPloy.Distributor
+namespace DPloy.Distributor.Output
 {
-	internal sealed class Operation
+	internal sealed class ConsoleWriterOperation
+		: IOperation
 	{
 		public const string Ok    = " [  OK  ] ";
 		public const string Error = " [FAILED] ";
@@ -14,7 +15,7 @@ namespace DPloy.Distributor
 		private readonly int _maxLineLength;
 		private readonly bool _verbose;
 
-		public Operation(TextWriter writer, string message, int maxLineLength, bool verbose)
+		public ConsoleWriterOperation(TextWriter writer, string message, int maxLineLength, bool verbose)
 		{
 			_writer = writer;
 			_message = message;

@@ -11,8 +11,8 @@ namespace DPloy.Distributor
 		/// <remarks>
 		///     The returned object should be disposed of when it is no longer needed.
 		/// </remarks>
-		/// <param name="addressOrDomain"></param>
+		/// <param name="address"></param>
 		/// <returns></returns>
-		INode ConnectTo(string addressOrDomain);
+		INode ConnectTo(string address);
 	}
 }

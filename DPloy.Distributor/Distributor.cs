@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using DPloy.Core;
 using DPloy.Core.PublicApi;
+using DPloy.Distributor.Output;
 
 namespace DPloy.Distributor
 {
@@ -11,11 +11,11 @@ namespace DPloy.Distributor
 		, IDisposable
 	{
 		private readonly List<NodeClient> _clients;
-		private readonly ConsoleWriter _consoleWriter;
+		private readonly IOperationTracker _operationTracker;
 
-		public Distributor(ConsoleWriter consoleWriter)
+		public Distributor(IOperationTracker operationTracker)
 		{
-			_consoleWriter = consoleWriter;
+			_operationTracker = operationTracker;
 			_clients = new List<NodeClient>();
 		}
 
@@ -28,20 +28,14 @@ namespace DPloy.Distributor
 
 		#endregion
 
-		public INode ConnectTo(string addressOrDomain, int port)
+		public INode ConnectTo(string address)
 		{
-			var ep = new IPEndPoint(IPAddress.Parse(addressOrDomain), port);
-			return AddClient(() => NodeClient.Create(_consoleWriter, ep));
-		}
-
-		public INode ConnectTo(string computerName)
-		{
-			return AddClient(() => NodeClient.Create(_consoleWriter, computerName));
+			return AddClient(() => NodeClient.Create(_operationTracker, address));
 		}
 
 		public INode ConnectTo(IPEndPoint ep)
 		{
-			return AddClient(() => NodeClient.Create(_consoleWriter, ep));
+			return AddClient(() => NodeClient.Create(_operationTracker, ep));
 		}
 
 		private INode AddClient(Func<NodeClient> fn)

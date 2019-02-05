@@ -6,14 +6,14 @@ using System.Reflection;
 using System.Text;
 using log4net;
 
-namespace DPloy.Distributor
+namespace DPloy.Distributor.Output
 {
 	/// <summary>
+	///     Writes the progress of individual operations immediately to the console.
 	/// </summary>
 	internal sealed class ConsoleWriter
+		: IOperationTracker
 	{
-		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
 		private const string CutIndicator = "[...]";
 
 		/// <summary>
@@ -21,13 +21,15 @@ namespace DPloy.Distributor
 		/// </summary>
 		private const string NodeOperationIndent = "  ";
 
+		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
 		private readonly int _maxStatusWidth;
 		private readonly bool _verbose;
 
 		public ConsoleWriter(bool verbose)
 		{
 			_verbose = verbose;
-			_maxStatusWidth = Math.Max(Operation.Ok.Length, Operation.Error.Length);
+			_maxStatusWidth = Math.Max(ConsoleWriterOperation.Ok.Length, ConsoleWriterOperation.Error.Length);
 		}
 
 		private int MaxLineLength
@@ -46,7 +48,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public Operation BeginLoadScript(string scriptFilePath)
+		public IOperation BeginLoadScript(string scriptFilePath)
 		{
 			var template = "Loading script '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -58,7 +60,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginCompileScript(string scriptFilePath)
+		public IOperation BeginCompileScript(string scriptFilePath)
 		{
 			var template = "Compiling script '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -70,7 +72,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginConnect(string destination)
+		public IOperation BeginConnect(string destination)
 		{
 			var template = "Connecting to '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -79,7 +81,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginDisconnect(IPEndPoint remoteEndPoint)
+		public IOperation BeginDisconnect(IPEndPoint remoteEndPoint)
 		{
 			var template = "Disconnecting from '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -88,7 +90,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginCopyFile(string sourcePath, string destinationPath)
+		public IOperation BeginCopyFile(string sourcePath, string destinationPath)
 		{
 			var template = NodeOperationIndent + "Copying '{0}' to '{1}'";
 			var maxLineLength = MaxLineLength;
@@ -103,7 +105,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginCopyFiles(IReadOnlyList<string> sourceFiles, string destinationFolder)
+		public IOperation BeginCopyFiles(IReadOnlyList<string> sourceFiles, string destinationFolder)
 		{
 			var template = NodeOperationIndent + $"Copying {sourceFiles.Count} files to " + "'{0}'";
 			var maxLineLength = MaxLineLength;
@@ -116,7 +118,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginCopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
+		public IOperation BeginCopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
 		{
 			var template = NodeOperationIndent + "Copying directory '{0}' to '{1}'";
 			var maxLineLength = MaxLineLength;
@@ -131,7 +133,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginCreateDirectory(string destinationDirectoryPath)
+		public IOperation BeginCreateDirectory(string destinationDirectoryPath)
 		{
 			var template = NodeOperationIndent + "Creating directory '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -144,7 +146,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginDeleteDirectory(string destinationDirectoryPath)
+		public IOperation BeginDeleteDirectory(string destinationDirectoryPath)
 		{
 			var template = NodeOperationIndent + "Deleting directory '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -157,7 +159,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginDeleteFile(string destinationFilePath)
+		public IOperation BeginDeleteFile(string destinationFilePath)
 		{
 			var template = NodeOperationIndent + "Deleting file '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -170,7 +172,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginDownloadFile(string sourceFileUri, string destinationDirectory)
+		public IOperation BeginDownloadFile(string sourceFileUri, string destinationDirectory)
 		{
 			var template = NodeOperationIndent + "Downloading '{0}' to '{1}'";
 			var maxLineLength = MaxLineLength;
@@ -186,7 +188,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginCreateFile(string destinationFilePath)
+		public IOperation BeginCreateFile(string destinationFilePath)
 		{
 			var template = NodeOperationIndent + "Creating file '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -199,7 +201,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginExecuteCommand(string cmd)
+		public IOperation BeginExecuteCommand(string cmd)
 		{
 			var template = NodeOperationIndent + "Executing '{0}'";
 			var maxLineLength = MaxLineLength;
@@ -212,7 +214,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginStartService(string serviceName)
+		public IOperation BeginStartService(string serviceName)
 		{
 			Log.InfoFormat("Starting service '{0}'...", serviceName);
 
@@ -227,7 +229,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginStopService(string serviceName)
+		public IOperation BeginStopService(string serviceName)
 		{
 			Log.InfoFormat("Stopping service '{0}'...", serviceName);
 
@@ -242,7 +244,7 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public Operation BeginKillProcesses(string processName)
+		public IOperation BeginKillProcesses(string processName)
 		{
 			Log.InfoFormat("Killing process(es) '{0}'...", processName);
 
@@ -257,14 +259,14 @@ namespace DPloy.Distributor
 			return CreateOperation(message, maxLineLength);
 		}
 
-		private Operation CreateOperation(StringBuilder message, int maxLineLength)
+		private ConsoleWriterOperation CreateOperation(StringBuilder message, int maxLineLength)
 		{
 			return CreateOperation(message.ToString(), maxLineLength);
 		}
 
-		private Operation CreateOperation(string message, int maxLineLength)
+		private ConsoleWriterOperation CreateOperation(string message, int maxLineLength)
 		{
-			return new Operation(Console.Out, message, maxLineLength, _verbose);
+			return new ConsoleWriterOperation(Console.Out, message, maxLineLength, _verbose);
 		}
 
 		private static void PruneTwoPaths(string path1,
@@ -293,7 +295,7 @@ namespace DPloy.Distributor
 			if (cmd.Length > remaining)
 			{
 				var builder = new StringBuilder(remaining);
-				builder.Append(cmd, 0, remaining - CutIndicator.Length);
+				builder.Append(cmd, startIndex: 0, count: remaining - CutIndicator.Length);
 				builder.Append(CutIndicator);
 				return builder.ToString();
 			}
@@ -305,7 +307,6 @@ namespace DPloy.Distributor
 		{
 			if (path.Length > maxLength)
 			{
-				var cutIndicator = "[...]";
 				var charactersToCut = path.Length - maxLength + CutIndicator.Length;
 
 				var startCut = FindIdealCutPoint(path, charactersToCut);

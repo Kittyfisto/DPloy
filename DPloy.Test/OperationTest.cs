@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.IO;
-using DPloy.Distributor;
 using DPloy.Distributor.Exceptions;
+using DPloy.Distributor.Output;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -26,7 +26,7 @@ namespace DPloy.Test
 		private static string WriteFailed(Exception e, bool verbose)
 		{
 			var writer = new StringWriter();
-			var op = new Operation(writer, "", 120, verbose);
+			var op = new ConsoleWriterOperation(writer, "", 120, verbose);
 			op.Failed(e);
 			return writer.ToString();
 		}

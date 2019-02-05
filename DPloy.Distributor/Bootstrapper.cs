@@ -6,6 +6,7 @@ using CommandLine;
 using DPloy.Core;
 using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Options;
+using DPloy.Distributor.Output;
 
 namespace DPloy.Distributor
 {

@@ -1,4 +1,4 @@
-﻿using DPloy.Distributor;
+﻿using DPloy.Distributor.Output;
 using FluentAssertions;
 using NUnit.Framework;
 

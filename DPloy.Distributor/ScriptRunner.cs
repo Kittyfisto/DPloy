@@ -5,11 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using csscript;
 using CSScriptLibrary;
-using DPloy.Core;
 using DPloy.Core.PublicApi;
 using DPloy.Distributor.Exceptions;
+using DPloy.Distributor.Output;
 using log4net;
 
 namespace DPloy.Distributor
@@ -31,16 +32,13 @@ namespace DPloy.Distributor
 		public static int Run(ConsoleWriter consoleWriter, string scriptFilePath, IReadOnlyList<string> scriptArguments)
 		{
 			var script = LoadAndCompileScript(consoleWriter, scriptFilePath);
-			using (var distributor = new Distributor(consoleWriter))
-			{
-				Log.InfoFormat("Executing '{0}'...", scriptFilePath);
+			Log.InfoFormat("Executing '{0}'...", scriptFilePath);
 
-				var exitCode = Run(script, distributor, scriptArguments);
+			var exitCode = Run(script, scriptArguments);
 
-				Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
+			Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
 
-				return exitCode;
-			}
+			return exitCode;
 		}
 
 		/// <summary>
@@ -48,24 +46,21 @@ namespace DPloy.Distributor
 		/// </summary>
 		/// <param name="consoleWriter"></param>
 		/// <param name="scriptFilePath"></param>
-		/// <param name="nodes"></param>
+		/// <param name="nodeAddresses"></param>
 		/// <returns></returns>
-		public static int Deploy(ConsoleWriter consoleWriter, string scriptFilePath, IReadOnlyList<string> nodes)
+		public static int Deploy(ConsoleWriter consoleWriter, string scriptFilePath, IReadOnlyList<string> nodeAddresses)
 		{
 			var script = LoadAndCompileScript(consoleWriter, scriptFilePath);
-			using (var distributor = new Distributor(consoleWriter))
-			{
-				Log.InfoFormat("Executing '{0}'...", scriptFilePath);
+			Log.InfoFormat("Executing '{0}'...", scriptFilePath);
 
-				var exitCode = Deploy(script, distributor, nodes);
+			var exitCode = Deploy(script, consoleWriter, nodeAddresses);
 
-				Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
+			Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
 
-				return exitCode;
-			}
+			return exitCode;
 		}
 
-		private static int Run(object script, Distributor distributor, IReadOnlyList<string> args)
+		private static int Run(object script, IReadOnlyList<string> args)
 		{
 			var method = FindMethod(script, "Run");
 			if (method == null)
@@ -85,7 +80,7 @@ namespace DPloy.Distributor
 			throw new ScriptExecutionException($"Expected main entry point to either return no value or to return an Int32, but found: {method.ReturnType.Name}");
 		}
 
-		private static int Deploy(object script, Distributor distributor, IReadOnlyList<string> nodes)
+		private static int Deploy(object script, ConsoleWriter consoleWriter, IReadOnlyList<string> nodeAddresses)
 		{
 			const string expectedSignature = "void Deploy(INode)";
 
@@ -100,17 +95,46 @@ namespace DPloy.Distributor
 			    !parameters[0].IsRetval && 
 			    !parameters[0].IsOut)
 			{
-				foreach (var nodeAddress in nodes)
+				if (nodeAddresses.Count == 1)
 				{
-					using (var node = distributor.ConnectTo(nodeAddress))
-					{
-						InvokeMethod(script, method, new object[]{node});
-					}
+					DeployTo(script, method, consoleWriter, nodeAddresses[0]);
 				}
+				else
+				{
+					var tracker = new NodeTracker(consoleWriter, nodeAddresses);
+					Parallel.ForEach(nodeAddresses, nodeAddress =>
+					{
+						var nodeTracker = tracker.Get(nodeAddress);
+						try
+						{
+							DeployTo(script, method, nodeTracker, nodeAddress);
+							nodeTracker.Success();
+						}
+						catch (Exception e)
+						{
+							// We want keep track of failures on individual nodes
+							// and only rethrow those exceptions after everything's done.
+							nodeTracker.Failed(e);
+						}
+					});
+
+					tracker.ThrowOnFailure();
+				}
+
+				
 				return 0;
 			}
 
 			throw new ScriptExecutionException($"Expected an entry with the following signature '{expectedSignature}' but '{method.ReturnType.Name}' has an incompatible signature!");
+		}
+
+		private static void DeployTo(object script, MethodInfo method, IOperationTracker operationTracker, string nodeAddress)
+		{
+			using (var distributor = new Distributor(operationTracker))
+			using (var node = distributor.ConnectTo(nodeAddress))
+			{
+				InvokeMethod(script, method, new object[] {node});
+			}
 		}
 
 		[Pure]
@@ -149,17 +173,17 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static object LoadAndCompileScript(ConsoleWriter consoleWriter, string scriptFilePath)
+		private static object LoadAndCompileScript(ConsoleWriter operationTracker, string scriptFilePath)
 		{
-			var script = LoadAndPreprocessScript(consoleWriter, scriptFilePath);
-			return CompileScript(consoleWriter, scriptFilePath, script);
+			var script = LoadAndPreprocessScript(operationTracker, scriptFilePath);
+			return CompileScript(operationTracker, scriptFilePath, script);
 		}
 
-		private static string LoadAndPreprocessScript(ConsoleWriter consoleWriter, string scriptFilePath)
+		private static string LoadAndPreprocessScript(ConsoleWriter operationTracker, string scriptFilePath)
 		{
 			Log.InfoFormat("Loading '{0}'...", scriptFilePath);
 
-			var operation = consoleWriter.BeginLoadScript(scriptFilePath);
+			var operation = operationTracker.BeginLoadScript(scriptFilePath);
 
 			string script;
 			try
@@ -214,14 +238,14 @@ namespace DPloy.Distributor
 			return exceptions;
 		}
 
-		private static object CompileScript(ConsoleWriter consoleWriter, string scriptFilePath, string script)
+		private static object CompileScript(ConsoleWriter operationTracker, string scriptFilePath, string script)
 		{
 			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
 
 			var evaluator = CSScript.Evaluator;
 			evaluator.ReferenceAssembly(typeof(INode).Assembly);
 
-			var operation = consoleWriter.BeginCompileScript(scriptFilePath);
+			var operation = operationTracker.BeginCompileScript(scriptFilePath);
 
 			try
 			{

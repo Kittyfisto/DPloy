@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using DPloy.Core;
 using DPloy.Core.PublicApi;
-using DPloy.Distributor;
+using DPloy.Distributor.Output;
 using DPloy.Node;
 using FluentAssertions;
 using NUnit.Framework;

@@ -98,9 +98,14 @@
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="Output\NodeTracker.cs" />
+    <Compile Include="Output\Operation.cs" />
+    <Compile Include="Output\OperationTracker.cs" />
+    <Compile Include="Output\IOperationTracker.cs" />
     <Compile Include="IDistributor.cs" />
-    <Compile Include="Operation.cs" />
-    <Compile Include="ConsoleWriter.cs" />
+    <Compile Include="Output\IOperation.cs" />
+    <Compile Include="Output\ConsoleWriterOperation.cs" />
+    <Compile Include="Output\ConsoleWriter.cs" />
     <Compile Include="Options\DeployOptions.cs" />
     <Compile Include="Options\ExampleOptions.cs" />
     <Compile Include="PreprocessorContext.cs" />
