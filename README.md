@@ -1,6 +1,8 @@
 # DPloy
 Tool to distribute software to remote computers.
 
+[![Build status](https://ci.appveyor.com/api/projects/status/yoam7e1xc7fm3j2r?svg=true)](https://ci.appveyor.com/project/Kittyfisto/dploy)
+
 # A warning
 
 **Connections between Distributor.exe and Node.exe are NOT secured IN ANY WAY. You SHOULD NOT use this over an insecure network and especially NOT over the internet.** This will be fixed with https://github.com/Kittyfisto/DPloy/issues/4, but that time has not come yet.
