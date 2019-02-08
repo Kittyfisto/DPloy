@@ -154,6 +154,7 @@
 	  $(OutputPath)CSScriptLibrary.dll;
 	  $(OutputPath)Mono.CSharp.dll;
 	  $(OutputPath)Mono.Posix.dll
+	  $(OutputPath)System.Extensions.dll
 	</DependantAssemblies>
   </PropertyGroup>
   <ItemGroup>
