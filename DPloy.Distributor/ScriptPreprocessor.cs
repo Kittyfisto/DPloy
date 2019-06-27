@@ -44,11 +44,53 @@ namespace DPloy.Distributor
 		/// <returns>The preprocessed content of the script at the given path</returns>
 		public async Task<string> ProcessFileAsync(string scriptFilePath, IReadOnlyList<string> includeFolders)
 		{
-			return await ProcessFileAsync(MakeAbsolute(scriptFilePath),
-			                              PreprocessorContext.CreateFor(scriptFilePath, includeFolders));
+			var content = await PreProcessFileAsync(MakeAbsolute(scriptFilePath),
+			                                     PreprocessorContext.CreateFor(scriptFilePath, includeFolders));
+			return Process(content);
 		}
 
-		private async Task<string> ProcessFileAsync(string scriptFilePath, PreprocessorContext context)
+		private string Process(string content)
+		{
+			var namespaces = RemoveUsings(content, out var tmp);
+
+			int i = 0;
+			foreach (var @namespace in namespaces)
+			{
+				var snippet = $"using namespace {@namespace};\r\n";
+				tmp.Insert(i, snippet);
+				i += snippet.Length;
+			}
+
+			return tmp.ToString();
+		}
+
+		private static HashSet<string> RemoveUsings(string content, out StringBuilder builder)
+		{
+			var namespaces = new HashSet<string>();
+			builder = new StringBuilder(content.Length);
+			var regex = new Regex(@"\s*using\s+namespace\s+([^;\s]+)\s*;");
+			int i;
+			for(i = 0; i < content.Length;)
+			{
+				var match = regex.Match(content, i, content.Length - i);
+				if (!match.Success)
+					break;
+
+				var start = match.Index;
+				var end = start + match.Length;
+				builder.Append(content, i, start - i);
+				var @namespace = match.Groups[1].Value.Trim();
+				namespaces.Add(@namespace);
+
+				i = end;
+			}
+
+			builder.Append(content, i, content.Length - i);
+
+			return namespaces;
+		}
+
+		private async Task<string> PreProcessFileAsync(string scriptFilePath, PreprocessorContext context)
 		{
 			try
 			{
@@ -66,7 +108,7 @@ namespace DPloy.Distributor
 						var includedFilePath = match.Groups[groupnum: 1].Value.Trim();
 						var subScriptFilePath = await ResolveScriptPathAsync(includedFilePath, context);
 						var subScriptContent =
-							await ProcessFileAsync(subScriptFilePath, context.CreateContextFor(subScriptFilePath));
+							await PreProcessFileAsync(subScriptFilePath, context.CreateContextFor(subScriptFilePath));
 
 						processedScript.Append(subScriptContent);
 

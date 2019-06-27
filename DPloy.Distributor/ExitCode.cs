@@ -39,6 +39,11 @@
 		ExecutionError = 12,
 
 		/// <summary>
+		///     There was a problem establishing the connection to the node.
+		/// </summary>
+		ConnectionError = 100,
+
+		/// <summary>
 		///     There was an unhandled exception in this application.
 		///     This is most certainly a bug and you'd be doing me a favour by reporting it:
 		///     https://github.com/Kittyfisto/DPloy/issues/new

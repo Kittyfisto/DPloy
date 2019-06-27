@@ -141,6 +141,13 @@ namespace DPloy.Distributor
 				PrintUnhandledScriptException(options.Verbose, e);
 				return ExitCode.ExecutionError;
 			}
+			catch (NotConnectedException e)
+			{
+				Console.WriteLine();
+				Console.WriteLine("Terminating the application because a node could not be connected to");
+
+				return ExitCode.ConnectionError;
+			}
 			catch (Exception e)
 			{
 				Console.WriteLine();

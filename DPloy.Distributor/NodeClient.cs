@@ -10,10 +10,12 @@ using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteInterfaces;
+using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Output;
 using DPloy.Distributor.SharpRemoteImplementations;
 using log4net;
 using SharpRemote;
+using NotConnectedException = DPloy.Distributor.Exceptions.NotConnectedException;
 
 namespace DPloy.Distributor
 {
@@ -170,6 +172,11 @@ namespace DPloy.Distributor
 				operation.Success();
 				return node;
 			}
+			catch (SharpRemoteException e)
+			{
+				operation.Failed(e);
+				throw new NotConnectedException(e);
+			}
 			catch (Exception e)
 			{
 				operation.Failed(e);
@@ -185,16 +192,9 @@ namespace DPloy.Distributor
 				{
 					AllowRemoteHeartbeatDisable = true
 				});
-			try
-			{
-				Connect(socket, address);
-				return new NodeClient(operationTracker, socket, address);
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-				throw;
-			}
+
+			Connect(socket, address);
+			return new NodeClient(operationTracker, socket, address);
 		}
 
 		private static void Connect(SocketEndPoint socket, string address)

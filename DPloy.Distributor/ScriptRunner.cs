@@ -121,7 +121,6 @@ namespace DPloy.Distributor
 					tracker.ThrowOnFailure();
 				}
 
-				
 				return 0;
 			}
 

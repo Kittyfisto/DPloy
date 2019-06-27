@@ -46,6 +46,7 @@ namespace DPloy.Test
 			WriteFile(barPath, bar);
 
 			PreprocessFile(fooPath).Should().Be("using namespace System;\r\n" +
+			                                    "\r\n" +
 			                                    "public static class Program { public static void Main() {} }");
 		}
 
@@ -79,6 +80,35 @@ namespace DPloy.Test
 			new Action(() => PreprocessFile(fooPath))
 				.Should().Throw<AggregateException>()
 				.WithInnerException<ScriptCompilationException>();
+		}
+
+		[Test]
+		[Description("")]
+		public void TestFixUsingStatements()
+		{
+			var main = "//css_import Foo\r\n"+
+			          "public static class Program { public static void Main() {} }";
+			var mainPath = @"C:\main.cs";
+			WriteFile(mainPath, main);
+
+			var foo = "//css_import Bar\r\n" +
+				" using namespace System;\r\n"+
+				"public static class Foo { public static int Get() { return 42; } }";
+			var fooPath = @"C:\foo.cs";
+			WriteFile(fooPath, foo);
+
+			var bar = "  using  namespace System\t\t ;\r\n"+
+					  "\t\tusing \t namespace System.IO ;\r\n" +
+				"public static class Bar { public static string Get() { return \"Whatever...\"; } }";
+			var barPath = @"C:\bar.cs";
+			WriteFile(barPath, bar);
+
+			PreprocessFile(mainPath).Should().Be("using namespace System;\r\n" +
+			                                     "using namespace System.IO;\r\n" +
+			                                     "\r\n" +
+			                                     "public static class Bar { public static string Get() { return \"Whatever...\"; } }\r\n" +
+			                                     "public static class Foo { public static int Get() { return 42; } }\r\n" +
+			                                     "public static class Program { public static void Main() {} }");
 		}
 
 		private string PreprocessScript(string script)
