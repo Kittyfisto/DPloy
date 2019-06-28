@@ -453,10 +453,21 @@ namespace DPloy.Distributor
 
 		public void ExecuteFile(string clientFilePath, string commandLine = null)
 		{
-			var command = $"\"{clientFilePath}\" {commandLine}";
-			var returnCode = ExecuteCommand(command);
-			if (returnCode != 0)
-				throw new Exception($"The command {command} returned {returnCode}");
+			Log.InfoFormat("Executing '{0} {1}'...", clientFilePath, commandLine);
+			var operation = _operationTracker.BeginExecuteCommand(clientFilePath);
+			try
+			{
+				var exitCode = _shell.ExecuteFile(clientFilePath, commandLine);
+				if (exitCode != 0)
+					throw new Exception($"{clientFilePath} returned {exitCode}");
+
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
 		}
 
 		public int ExecuteCommand(string cmd)
@@ -525,7 +536,7 @@ namespace DPloy.Distributor
 
 		private int ExecuteCommandPrivate(string cmd)
 		{
-			return _shell.Execute(cmd);
+			return _shell.ExecuteCommand(cmd);
 		}
 
 		private void CopyFilePrivate(string sourceFilePath, string destinationFilePath)

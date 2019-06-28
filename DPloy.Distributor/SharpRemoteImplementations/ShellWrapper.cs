@@ -18,11 +18,23 @@ namespace DPloy.Distributor.SharpRemoteImplementations
 
 		#region Implementation of IShell
 
-		public int Execute(string command)
+		public int ExecuteFile(string file, string commandLine)
 		{
 			try
 			{
-				return _shell.Execute(command);
+				return _shell.ExecuteFile(file, commandLine);
+			}
+			catch (Exception e)
+			{
+				throw new RemoteNodeException(_machine, e);
+			}
+		}
+
+		public int ExecuteCommand(string command)
+		{
+			try
+			{
+				return _shell.ExecuteCommand(command);
 			}
 			catch (Exception e)
 			{

@@ -5,6 +5,9 @@ namespace DPloy.Core.SharpRemoteInterfaces
 	public interface IShell
 	{
 		[Invoke(Dispatch.SerializePerObject)]
-		int Execute(string command);
+		int ExecuteFile(string file, string commandLine);
+
+		[Invoke(Dispatch.SerializePerObject)]
+		int ExecuteCommand(string command);
 	}
 }
