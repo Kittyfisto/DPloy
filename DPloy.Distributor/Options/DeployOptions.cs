@@ -14,5 +14,8 @@ namespace DPloy.Distributor.Options
 
 		[Option('v', "verbose")]
 		public bool Verbose { get; set; }
+
+		[Option('a', "arguments")]
+		public IEnumerable<string> Arguments { get; set; }
 	}
 }

@@ -9,17 +9,25 @@ namespace DPloy.Distributor.Exceptions
 	{
 		private readonly IReadOnlyList<string> _warnings;
 		private readonly IReadOnlyList<string> _errors;
+		private readonly string _scriptPath;
 
-		public ScriptCompilationException(params string[] errors)
+		public ScriptCompilationException(string scriptPath, params string[] errors)
 		{
+			_scriptPath = scriptPath;
 			_errors = errors;
 		}
 
-		public ScriptCompilationException(CompilerException e)
+		public ScriptCompilationException(string scriptPath, CompilerException e)
 			: base(e.Message, e)
 		{
+			_scriptPath = scriptPath;
 			_errors = e.Data["Errors"] as List<string> ?? new List<string>();
 			_warnings = e.Data["Warnings"] as List<string> ?? new List<string>();
+		}
+
+		public string ScriptPath
+		{
+			get { return _scriptPath; }
 		}
 
 		public IReadOnlyList<string> Errors

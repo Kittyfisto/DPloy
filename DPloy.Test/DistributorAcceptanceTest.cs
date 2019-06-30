@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using DPloy.Core;
@@ -19,7 +20,7 @@ namespace DPloy.Test
 			{
 				node.Bind(new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort));
 
-				Deploy("Copy1byte_a.cs", new []{IPAddress.Loopback.ToString()}).Should().Be(0);
+				Deploy("Copy1byte_a.cs", new []{IPAddress.Loopback.ToString()}, new string[0]).Should().Be(0);
 			}
 		}
 
@@ -27,6 +28,28 @@ namespace DPloy.Test
 		public void TestForwardArguments([Values(1, 2, 3, int.MaxValue)] int argument)
 		{
 			Run("ParseArgument.cs", new[]{argument.ToString()}).Should().Be(argument);
+		}
+
+		[Test]
+		public void TestDeployForwardArguments([Values(1, 2, 3, int.MaxValue)] int argument)
+		{
+			using (var node = new NodeServer())
+			{
+				node.Bind(new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort));
+
+				Deploy("DeployWithParameter.cs", new []{IPAddress.Loopback.ToString()}, new[]{argument.ToString()}).Should().Be(argument);
+			}
+		}
+
+		[Test]
+		public void TestDeployMultipleArguments()
+		{
+			using (var node = new NodeServer())
+			{
+				node.Bind(new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort));
+
+				Deploy("DeployWithParameter.cs", new []{IPAddress.Loopback.ToString()}, new[]{"42", "9001"}).Should().Be(9043);
+			}
 		}
 
 		[Test]
@@ -91,24 +114,36 @@ namespace DPloy.Test
 			return Execute(arguments.ToString());
 		}
 
-		private int Deploy(string scriptFilePath, string[] nodes)
+		private int Deploy(string scriptFilePath, string[] nodes, string[] arguments)
 		{
 			var fullScriptPath = Path.Combine(AssemblySetup.ScriptsDirectory, scriptFilePath);
 
-			var arguments = new StringBuilder();
-			arguments.AppendFormat("deploy \"{0}\"", fullScriptPath);
+			var args = new StringBuilder();
+			args.AppendFormat("deploy \"{0}\"", fullScriptPath);
 
 			foreach (var node in nodes)
 			{
-				arguments.Append(" ");
-				arguments.Append(node);
+				args.Append(" ");
+				args.Append(node);
 			}
 
-			return Execute(arguments.ToString());
+			if (arguments.Any())
+			{
+				args.Append(" --arguments");
+				foreach (var argument in arguments)
+				{
+					args.Append(" ");
+					args.Append(argument);
+				}
+			}
+
+			return Execute(args.ToString());
 		}
 
 		private static int Execute(string arguments)
 		{
+			TestContext.Progress.WriteLine("Arguments: {0}", arguments);
+
 			var executablePath = Path.Combine(AssemblySetup.AssemblyDirectory, "Distributor.exe");
 			var process = new Process
 			{

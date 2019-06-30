@@ -30,12 +30,50 @@ namespace DPloy.Distributor
 		{
 			Log4Net.Setup(Constants.Distributor, args);
 
-			return Parser.Default.ParseArguments<DeployOptions, RunOptions, ExampleOptions>(args)
-			             .MapResult(
-			                        (DeployOptions options) => (int) Deploy(options),
-			                        (RunOptions options) => (int)Run(options),
-			                        (ExampleOptions options) => ShowExample(options),
-			                        errs => (int) ExitCode.InvalidArguments);
+			try
+			{
+				var result = Parser.Default.ParseArguments<DeployOptions, RunOptions, ListOptions, ExampleOptions>(args);
+				return result.MapResult(
+				                        (DeployOptions options) => (int) Deploy(options),
+				                        (RunOptions options) => (int)Run(options),
+				                        (ListOptions options) => (int)Run(options),
+				                        (ExampleOptions options) => ShowExample(options),
+				                        errs => (int) ExitCode.InvalidArguments);
+			}
+			catch (ScriptCannotBeAccessedException e)
+			{
+				Console.WriteLine();
+				Console.WriteLine("Error: {0}", e.Message);
+				return (int) ExitCode.ScriptCannotBeAccessed;
+			}
+			catch (ScriptCompilationException e)
+			{
+				Console.WriteLine();
+				Console.WriteLine("Build failed:");
+
+				foreach (var err in e.Errors) Console.WriteLine("{0}, {1}", e.ScriptPath, err);
+				foreach (var warning in e.Warnings) Console.WriteLine("{0}, {1}", e.ScriptPath, warning);
+				return (int) ExitCode.CompileError;
+			}
+			catch (ScriptExecutionException e)
+			{
+				Console.WriteLine();
+				PrintUnhandledScriptException(false, e);
+				return (int) ExitCode.ExecutionError;
+			}
+			catch (NotConnectedException)
+			{
+				Console.WriteLine();
+				Console.WriteLine("Terminating the application because a node could not be connected to");
+
+				return (int) ExitCode.ConnectionError;
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine();
+				PrintUnhandledException(e);
+				return (int) ExitCode.UnhandledException;
+			}
 		}
 
 		private static int ShowExample(ExampleOptions options)
@@ -67,38 +105,8 @@ namespace DPloy.Distributor
 			}
 
 			var arguments = options.ScriptArguments.ToArray();
-			try
-			{
-				var progressWriter = new ConsoleWriter(options.Verbose);
-				return (ExitCode) ScriptRunner.Run(progressWriter, scriptPath, arguments);
-			}
-			catch (ScriptCannotBeAccessedException e)
-			{
-				Console.WriteLine();
-				Console.WriteLine("Error: {0}", e.Message);
-				return ExitCode.ScriptCannotBeAccessed;
-			}
-			catch (ScriptCompilationException e)
-			{
-				Console.WriteLine();
-				Console.WriteLine("Build failed:");
-
-				foreach (var err in e.Errors) Console.WriteLine("{0}, {1}", scriptPath, err);
-				foreach (var warning in e.Warnings) Console.WriteLine("{0}, {1}", scriptPath, warning);
-				return ExitCode.CompileError;
-			}
-			catch (ScriptExecutionException e)
-			{
-				Console.WriteLine();
-				PrintUnhandledScriptException(options.Verbose, e);
-				return ExitCode.ExecutionError;
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine();
-				PrintUnhandledException(e);
-				return ExitCode.UnhandledException;
-			}
+			var progressWriter = new ConsoleWriter(options.Verbose);
+			return (ExitCode) ScriptRunner.Run(progressWriter, scriptPath, arguments);
 		}
 
 		private static ExitCode Deploy(DeployOptions options)
@@ -114,46 +122,26 @@ namespace DPloy.Distributor
 				return ExitCode.ScriptCannotBeAccessed;
 			}
 
+			var progressWriter = new ConsoleWriter(options.Verbose);
 			var nodes = options.Nodes.ToArray();
+			return (ExitCode) ScriptRunner.Deploy(progressWriter, scriptPath, nodes, options.Arguments);
+		}
+
+		private static ExitCode Run(ListOptions options)
+		{
+			string scriptPath;
 			try
 			{
-				var progressWriter = new ConsoleWriter(options.Verbose);
-				return (ExitCode) ScriptRunner.Deploy(progressWriter, scriptPath, nodes);
+				scriptPath = Paths.NormalizeAndEvaluate(options.Script);
 			}
-			catch (ScriptCannotBeAccessedException e)
+			catch (IOException e)
 			{
-				Console.WriteLine();
 				Console.WriteLine("Error: {0}", e.Message);
 				return ExitCode.ScriptCannotBeAccessed;
 			}
-			catch (ScriptCompilationException e)
-			{
-				Console.WriteLine();
-				Console.WriteLine("Build failed:");
-
-				foreach (var err in e.Errors) Console.WriteLine("{0}, {1}", scriptPath, err);
-				foreach (var warning in e.Warnings) Console.WriteLine("{0}, {1}", scriptPath, warning);
-				return ExitCode.CompileError;
-			}
-			catch (ScriptExecutionException e)
-			{
-				Console.WriteLine();
-				PrintUnhandledScriptException(options.Verbose, e);
-				return ExitCode.ExecutionError;
-			}
-			catch (NotConnectedException e)
-			{
-				Console.WriteLine();
-				Console.WriteLine("Terminating the application because a node could not be connected to");
-
-				return ExitCode.ConnectionError;
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine();
-				PrintUnhandledException(e);
-				return ExitCode.UnhandledException;
-			}
+			
+			var progressWriter = new ConsoleWriter(options.Verbose);
+			return ScriptRunner.ListEntryPoints(progressWriter, scriptPath);
 		}
 
 		private static void PrintUnhandledScriptException(bool verbose, ScriptExecutionException e)

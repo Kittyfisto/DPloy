@@ -68,6 +68,7 @@
     <Compile Include="ProgressWriterTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptPreprocessorTest.cs" />
+    <Compile Include="Scripts\DeployWithParameter.cs" />
     <Compile Include="ServicesTest.cs" />
     <Compile Include="TaskListTest.cs" />
     <None Include="app.config" />

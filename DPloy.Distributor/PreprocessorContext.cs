@@ -39,7 +39,7 @@ namespace DPloy.Distributor
 				throw new NotImplementedException($"Expected '{scriptFilePath}' to be an absolute file path!");
 
 			if (_includedScripts.Contains(scriptFilePath))
-				throw new ScriptCompilationException("Cyclic includes are not allowed");
+				throw new ScriptCompilationException(scriptFilePath, "Cyclic includes are not allowed");
 
 			var scriptFolder = Path.GetDirectoryName(scriptFilePath);
 			var includeFolders = new List<string>(_includeFolders);
