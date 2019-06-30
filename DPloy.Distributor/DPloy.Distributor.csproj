@@ -104,7 +104,6 @@
     <Compile Include="Output\Operation.cs" />
     <Compile Include="Output\OperationTracker.cs" />
     <Compile Include="Output\IOperationTracker.cs" />
-    <Compile Include="IDistributor.cs" />
     <Compile Include="Output\IOperation.cs" />
     <Compile Include="Output\ConsoleWriterOperation.cs" />
     <Compile Include="Output\ConsoleWriter.cs" />

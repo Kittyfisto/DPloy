@@ -162,13 +162,13 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public static NodeClient Create(IOperationTracker operationTracker, string address)
+		public static NodeClient Create(IOperationTracker operationTracker, string address, TimeSpan connectTimeout)
 		{
 			var operation = operationTracker.BeginConnect(address);
 
 			try
 			{
-				var node = CreatePrivate(operationTracker, address);
+				var node = CreatePrivate(operationTracker, address, connectTimeout);
 				operation.Success();
 				return node;
 			}
@@ -184,7 +184,9 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static NodeClient CreatePrivate(IOperationTracker operationTracker, string address)
+		private static NodeClient CreatePrivate(IOperationTracker operationTracker,
+		                                        string address,
+		                                        TimeSpan connectTimeout)
 		{
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
 				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
@@ -193,19 +195,19 @@ namespace DPloy.Distributor
 					AllowRemoteHeartbeatDisable = true
 				});
 
-			Connect(socket, address);
+			Connect(socket, address, connectTimeout);
 			return new NodeClient(operationTracker, socket, address);
 		}
 
-		private static void Connect(SocketEndPoint socket, string address)
+		private static void Connect(SocketEndPoint socket, string address, TimeSpan connectTimeout)
 		{
 			if (TryParseIPEndPoint(address, out var ipEndPoint))
 			{
-				socket.Connect(ipEndPoint);
+				socket.Connect(ipEndPoint, connectTimeout);
 			}
 			else if (IPAddress.TryParse(address, out var ipAddress))
 			{
-				socket.Connect(new IPEndPoint(ipAddress, Constants.ConnectionPort));
+				socket.Connect(new IPEndPoint(ipAddress, Constants.ConnectionPort), connectTimeout);
 			}
 			else
 			{

@@ -93,17 +93,7 @@ namespace DPloy.Distributor
 
 		private static ExitCode Run(RunOptions options)
 		{
-			string scriptPath;
-			try
-			{
-				scriptPath = Paths.NormalizeAndEvaluate(options.Script);
-			}
-			catch (IOException e)
-			{
-				Console.WriteLine("Error: {0}", e.Message);
-				return ExitCode.ScriptCannotBeAccessed;
-			}
-
+			var scriptPath = NormalizeAndEvaluate(options.Script);
 			var arguments = options.ScriptArguments.ToArray();
 			var progressWriter = new ConsoleWriter(options.Verbose);
 			return (ExitCode) ScriptRunner.Run(progressWriter, scriptPath, arguments);
@@ -111,20 +101,27 @@ namespace DPloy.Distributor
 
 		private static ExitCode Deploy(DeployOptions options)
 		{
-			string scriptPath;
-			try
-			{
-				scriptPath = Paths.NormalizeAndEvaluate(options.Script);
-			}
-			catch (IOException e)
-			{
-				Console.WriteLine("Error: {0}", e.Message);
-				return ExitCode.ScriptCannotBeAccessed;
-			}
+			var scriptPath = NormalizeAndEvaluate(options.Script);
 
 			var progressWriter = new ConsoleWriter(options.Verbose);
 			var nodes = options.Nodes.ToArray();
-			return (ExitCode) ScriptRunner.Deploy(progressWriter, scriptPath, nodes, options.Arguments);
+			return (ExitCode) ScriptRunner.Deploy(progressWriter,
+			                                      scriptPath,
+			                                      nodes,
+			                                      options.Arguments,
+			                                      TimeSpan.FromSeconds(options.TimeoutInSeconds));
+		}
+
+		private static string NormalizeAndEvaluate(string scriptPath)
+		{
+			try
+			{
+				return Paths.NormalizeAndEvaluate(scriptPath);
+			}
+			catch (IOException e)
+			{
+				throw new ScriptCannotBeAccessedException(e.Message, null);
+			}
 		}
 
 		private static ExitCode Run(ListOptions options)

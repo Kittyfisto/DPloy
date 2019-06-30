@@ -7,8 +7,7 @@ using DPloy.Distributor.Output;
 namespace DPloy.Distributor
 {
 	internal sealed class Distributor
-		: IDistributor
-		, IDisposable
+		: IDisposable
 	{
 		private readonly List<NodeClient> _clients;
 		private readonly IOperationTracker _operationTracker;
@@ -28,9 +27,9 @@ namespace DPloy.Distributor
 
 		#endregion
 
-		public INode ConnectTo(string address)
+		public INode ConnectTo(string address, TimeSpan connectTimeout)
 		{
-			return AddClient(() => NodeClient.Create(_operationTracker, address));
+			return AddClient(() => NodeClient.Create(_operationTracker, address, connectTimeout));
 		}
 
 		public INode ConnectTo(IPEndPoint ep)

@@ -158,13 +158,19 @@ namespace DPloy.Test
 					RedirectStandardError = true
 				}
 			};
+
+			var stopwatch = Stopwatch.StartNew();
 			process.Start();
 
 			var output = process.StandardOutput.ReadToEnd();
 			var error = process.StandardError.ReadToEnd();
 			process.WaitForExit();
 
+			stopwatch.Stop();
+			TestContext.Progress.WriteLine("{0} took {1}ms", executablePath, stopwatch.ElapsedMilliseconds);
+
 			TestContext.Progress.WriteLine(!string.IsNullOrEmpty(output) ? output : error);
+
 
 			return process.ExitCode;
 		}

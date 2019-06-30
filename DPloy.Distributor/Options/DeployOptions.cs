@@ -15,7 +15,10 @@ namespace DPloy.Distributor.Options
 		[Option('v', "verbose")]
 		public bool Verbose { get; set; }
 
-		[Option('a', "arguments")]
+		[Option('a', "arguments", HelpText = "A list of arguments which are passed on to the main entry point")]
 		public IEnumerable<string> Arguments { get; set; }
+
+		[Option('t', "timeout", Default = 5, HelpText = "The timeout (in seconds) used when connecting to nodes, defaults to 5 seconds")]
+		public int TimeoutInSeconds { get; set; }
 	}
 }

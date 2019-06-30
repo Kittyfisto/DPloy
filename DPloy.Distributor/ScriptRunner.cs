@@ -89,16 +89,18 @@ namespace DPloy.Distributor
 		/// <param name="scriptFilePath"></param>
 		/// <param name="nodeAddresses"></param>
 		/// <param name="arguments"></param>
+		/// <param name="connectTimeout"></param>
 		/// <returns></returns>
 		public static int Deploy(ConsoleWriter consoleWriter,
 		                         string scriptFilePath,
 		                         IReadOnlyList<string> nodeAddresses,
-		                         IEnumerable<string> arguments)
+		                         IEnumerable<string> arguments,
+		                         TimeSpan connectTimeout)
 		{
 			var script = LoadAndCompileScript(consoleWriter, scriptFilePath);
 			Log.InfoFormat("Executing '{0}'...", scriptFilePath);
 
-			var exitCode = Deploy(script, consoleWriter, nodeAddresses, arguments);
+			var exitCode = Deploy(script, consoleWriter, nodeAddresses, arguments, connectTimeout);
 
 			Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
 
@@ -128,20 +130,13 @@ namespace DPloy.Distributor
 		private static int Deploy(object script,
 		                          ConsoleWriter consoleWriter,
 		                          IReadOnlyList<string> nodeAddresses,
-		                          IEnumerable<string> arguments)
+		                          IEnumerable<string> arguments,
+		                          TimeSpan connectTimeout)
 		{
-			const string expectedSignature = "void Deploy(INode)";
-
-			var method = FindMethod(script, DeployEntryPointName);
-			if (method == null)
-				throw new ScriptExecutionException($"The script is missing a '{expectedSignature}' entry point");
-
-			if (!HasDeploySignature(method))
-				throw new ScriptExecutionException($"Expected an entry with the following signature '{expectedSignature}' but '{method.Name}' has an incompatible signature!");
-
+			var method = FindDeployMethod(script);
 			if (nodeAddresses.Count == 1)
 			{
-				return DeployTo(script, method, consoleWriter, nodeAddresses[0], arguments);
+				return DeployTo(script, method, consoleWriter, nodeAddresses[0], arguments, connectTimeout);
 			}
 
 			var tracker = new NodeTracker(consoleWriter, nodeAddresses);
@@ -150,7 +145,7 @@ namespace DPloy.Distributor
 				var nodeTracker = tracker.Get(nodeAddress);
 				try
 				{
-					DeployTo(script, method, nodeTracker, nodeAddress, arguments);
+					DeployTo(script, method, nodeTracker, nodeAddress, arguments, connectTimeout);
 					nodeTracker.Success();
 				}
 				catch (Exception e)
@@ -164,6 +159,20 @@ namespace DPloy.Distributor
 			tracker.ThrowOnFailure();
 
 			return 0;
+		}
+
+		private static MethodInfo FindDeployMethod(object script)
+		{
+			const string expectedSignature = "void Deploy(INode)";
+
+			var method = FindMethod(script, DeployEntryPointName);
+			if (method == null)
+				throw new ScriptExecutionException($"The script is missing a '{expectedSignature}' entry point");
+
+			if (!HasDeploySignature(method))
+				throw new
+					ScriptExecutionException($"Expected an entry with the following signature '{expectedSignature}' but '{method.Name}' has an incompatible signature!");
+			return method;
 		}
 
 		private static bool HasDeploySignature(MethodInfo method)
@@ -197,10 +206,11 @@ namespace DPloy.Distributor
 		                             MethodInfo method,
 		                             IOperationTracker operationTracker,
 		                             string nodeAddress,
-		                             IEnumerable<string> arguments)
+		                             IEnumerable<string> arguments,
+		                             TimeSpan connectTimeout)
 		{
 			using (var distributor = new Distributor(operationTracker))
-			using (var node = distributor.ConnectTo(nodeAddress))
+			using (var node = distributor.ConnectTo(nodeAddress, connectTimeout))
 			{
 				object[] args;
 				if (method.GetParameters().Length == 2)
