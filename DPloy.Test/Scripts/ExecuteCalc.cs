@@ -7,7 +7,7 @@ namespace DPloy.Test.Scripts
 	{
 		public void Deploy(INode node)
 		{
-			node.ExecuteFile(@"%System%\cmd.exe", timeout: TimeSpan.FromSeconds(1));
+			node.RunProcess(@"%System%\cmd.exe", timeout: TimeSpan.FromSeconds(1));
 		}
 	}
 }

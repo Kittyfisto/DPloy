@@ -39,13 +39,16 @@ namespace DPloy.Core.PublicApi
 		///    A path to an executable on this node's filesystem
 		///    <example>%system%\calc.exe</example>
 		/// </param>
-		/// <param name="commandLine"></param>
+		/// <param name="commandLine">
+		///    The command-line to forward to the newly started process
+		///    <example>--bar blub --foo 42</example>
+		/// </param>
 		/// <param name="timeout">
 		///    The amount of time this method should wait for the process to exit,
 		///    if no value is defined then it waits for an infinite amount of time.
 		/// </param>
 		/// <exception cref="Exception">In case the process exits with a non-zero value</exception>
-		void ExecuteFile(string clientFilePath, string commandLine = null, TimeSpan? timeout = null);
+		void RunProcess(string clientFilePath, string commandLine = null, TimeSpan? timeout = null);
 
 		int ExecuteCommand(string cmd);
 
