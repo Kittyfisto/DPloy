@@ -16,7 +16,7 @@ namespace DPloy.Core.PublicApi
 	///     Parameters such as 'destinationFilePath' refer to a path on the node (i.e. the connected remote computer).
 	/// </remarks>
 	/// <remarks>
-	///     TODO: Figure out how a proxy might be configured
+	///     TODO: Figure out how a (web)proxy should be configured
 	/// </remarks>
 	public interface INode : IDisposable
 	{
@@ -110,7 +110,7 @@ namespace DPloy.Core.PublicApi
 		/// <param name="destinationFilePath"></param>
 		/// <param name="forceCopy">When set to true, then the installer will always be copied to this node, even if a binary identical file already exists at the target location.</param>
 		/// <exception cref="ArgumentNullException"></exception>
-		/// <exception cref="PathTooLongException"></exception>
+		/// <exception cref="System.IO.PathTooLongException"></exception>
 		void CopyFile(string sourceFilePath, string destinationFilePath, bool forceCopy = false);
 
 		/// <summary>
@@ -123,7 +123,7 @@ namespace DPloy.Core.PublicApi
 		/// <param name="destinationFolder"></param>
 		/// <param name="forceCopy">When set to true, then the installer will always be copied to this node, even if a binary identical file already exists at the target location.</param>
 		/// <exception cref="ArgumentNullException"></exception>
-		/// <exception cref="PathTooLongException"></exception>
+		/// <exception cref="System.IO.PathTooLongException"></exception>
 		void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder, bool forceCopy = false);
 
 		/// <summary>
@@ -131,14 +131,14 @@ namespace DPloy.Core.PublicApi
 		/// </summary>
 		/// <param name="destinationFilePath"></param>
 		/// <exception cref="ArgumentNullException"></exception>
-		/// <exception cref="PathTooLongException"></exception>
+		/// <exception cref="System.IO.PathTooLongException"></exception>
 		void DeleteFile(string destinationFilePath);
 
 		/// <summary>
 		///     Creates a directory on this node if it doesn't already exist.
 		/// </summary>
 		/// <param name="destinationDirectoryPath"></param>
-		/// <exception cref="PathTooLongException"></exception>
+		/// <exception cref="System.IO.PathTooLongException"></exception>
 		void CreateDirectory(string destinationDirectoryPath);
 
 		/// <summary>
@@ -160,7 +160,7 @@ namespace DPloy.Core.PublicApi
 		/// <param name="sourceDirectoryPath">The path to the source directory which shall be copied</param>
 		/// <param name="destinationDirectoryPath">The path on this node where the source directory shall be placed</param>
 		/// <param name="forceCopy">When set to true, then the installer will always be copied to this node, even if a binary identical file already exists at the target location.</param>
-		/// <exception cref="PathTooLongException"></exception>
+		/// <exception cref="System.IO.PathTooLongException"></exception>
 		void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false);
 
 		/// <summary>
@@ -179,14 +179,14 @@ namespace DPloy.Core.PublicApi
 		/// <param name="sourceDirectoryPath">The path to the source directory which shall be copied</param>
 		/// <param name="destinationDirectoryPath">The path on this node where the source directory shall be placed</param>
 		/// <param name="forceCopy">When set to true, then the installer will always be copied to this node, even if a binary identical file already exists at the target location.</param>
-		/// <exception cref="PathTooLongException"></exception>
+		/// <exception cref="System.IO.PathTooLongException"></exception>
 		void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false);
 
 		/// <summary>
 		///     Deletes a directory from this node, does nothing if the directory doesn't exist.
 		/// </summary>
 		/// <param name="destinationDirectoryPath">The directory on the node which shall be deleted</param>
-		/// <exception cref="PathTooLongException"></exception>
+		/// <exception cref="System.IO.PathTooLongException"></exception>
 		void DeleteDirectoryRecursive(string destinationDirectoryPath);
 
 		/// <summary>
