@@ -18,11 +18,11 @@ namespace DPloy.Distributor.SharpRemoteImplementations
 
 		#region Implementation of IShell
 
-		public int ExecuteFile(string file, string commandLine)
+		public int ExecuteProcess(string file, string commandLine, TimeSpan timeout)
 		{
 			try
 			{
-				return _shell.ExecuteFile(file, commandLine);
+				return _shell.ExecuteProcess(file, commandLine, timeout);
 			}
 			catch (Exception e)
 			{

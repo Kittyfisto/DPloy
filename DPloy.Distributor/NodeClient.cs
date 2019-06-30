@@ -10,7 +10,6 @@ using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteInterfaces;
-using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Output;
 using DPloy.Distributor.SharpRemoteImplementations;
 using log4net;
@@ -169,6 +168,7 @@ namespace DPloy.Distributor
 			try
 			{
 				var node = CreatePrivate(operationTracker, address, connectTimeout);
+
 				operation.Success();
 				return node;
 			}
@@ -195,8 +195,16 @@ namespace DPloy.Distributor
 					AllowRemoteHeartbeatDisable = true
 				});
 
-			Connect(socket, address, connectTimeout);
-			return new NodeClient(operationTracker, socket, address);
+			try
+			{
+				Connect(socket, address, connectTimeout);
+				return new NodeClient(operationTracker, socket, address);
+			}
+			catch (Exception)
+			{
+				socket.Dispose();
+				throw;
+			}
 		}
 
 		private static void Connect(SocketEndPoint socket, string address, TimeSpan connectTimeout)
@@ -269,13 +277,14 @@ namespace DPloy.Distributor
 
 		#region Implementation of IClient
 
-		public void KillProcesses(string processName)
+		public int KillProcesses(string processName)
 		{
 			var operation = _operationTracker.BeginKillProcesses(processName);
 			try
 			{
-				KillProcessesPrivate(processName);
+				var numKilled = KillProcessesPrivate(processName);
 				operation.Success();
+				return numKilled;
 			}
 			catch (Exception e)
 			{
@@ -314,12 +323,12 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyFile(string sourceFilePath, string destinationFilePath)
+		public void CopyFile(string sourceFilePath, string destinationFilePath, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyFile(sourceFilePath, destinationFilePath);
 			try
 			{
-				CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFilePath);
+				CopyFilePrivate(Paths.NormalizeAndEvaluate(sourceFilePath), destinationFilePath, forceCopy);
 				operation.Success();
 			}
 			catch (Exception e)
@@ -329,12 +338,12 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder)
+		public void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyFiles(sourceFilePaths.ToList(), destinationFolder);
 			try
 			{
-				CopyFilesPrivate(sourceFilePaths.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder);
+				CopyFilesPrivate(sourceFilePaths.Select(Paths.NormalizeAndEvaluate).ToArray(), destinationFolder, forceCopy);
 				operation.Success();
 			}
 			catch (Exception e)
@@ -359,7 +368,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
+		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
 			try
@@ -367,7 +376,7 @@ namespace DPloy.Distributor
 				var sourceFiles = Directory.EnumerateFiles(Paths.NormalizeAndEvaluate(sourceDirectoryPath)).ToList();
 				if (sourceFiles.Any())
 				{
-					CopyFilesPrivate(sourceFiles, destinationDirectoryPath);
+					CopyFilesPrivate(sourceFiles, destinationDirectoryPath, forceCopy);
 				}
 				else
 				{
@@ -383,12 +392,12 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath)
+		public void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
 			try
 			{
-				CopyDirectoryRecursivePrivate(Paths.NormalizeAndEvaluate(sourceDirectoryPath), destinationDirectoryPath);
+				CopyDirectoryRecursivePrivate(Paths.NormalizeAndEvaluate(sourceDirectoryPath), destinationDirectoryPath, forceCopy);
 				operation.Success();
 			}
 			catch (Exception e)
@@ -428,7 +437,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder)
+		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false)
 		{
 			var destinationArchiveFolder = @"%temp%";
 			CopyFile(sourceArchivePath, destinationArchiveFolder);
@@ -436,30 +445,22 @@ namespace DPloy.Distributor
 			UnzipArchive(sourceArchivePath, destinationFolder, destinationArchiveFolder, overwrite: true);
 		}
 
-		private void UnzipArchive(string sourceArchivePath, string destinationFolder, string tmpFolder, bool overwrite)
-		{
-			Log.InfoFormat("Unzipping '{0}' into '{1}'", sourceArchivePath, destinationFolder);
-
-			var destinationArchivePath = Path.Combine(tmpFolder, Path.GetFileName(sourceArchivePath));
-			_files.Unzip(destinationArchivePath, destinationFolder, overwrite);
-		}
-
-		public void Install(string installerPath, string commandLine = null)
+		public void Install(string installerPath, string commandLine = null, bool forceCopy = false)
 		{
 			var destinationPath = Path.Combine(Paths.Temp, "DPloy", "Installers");
 			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
 
-			CopyFile(installerPath, destinationFilePath);
+			CopyFile(installerPath, destinationFilePath, forceCopy);
 			ExecuteFile(destinationFilePath, commandLine ?? "/S");
 		}
 
-		public void ExecuteFile(string clientFilePath, string commandLine = null)
+		public void ExecuteFile(string clientFilePath, string commandLine = null, TimeSpan? timeout = null)
 		{
 			Log.InfoFormat("Executing '{0} {1}'...", clientFilePath, commandLine);
 			var operation = _operationTracker.BeginExecuteCommand(clientFilePath);
 			try
 			{
-				var exitCode = _shell.ExecuteFile(clientFilePath, commandLine);
+				var exitCode = _shell.ExecuteProcess(clientFilePath, commandLine, timeout ?? TimeSpan.MaxValue);
 				if (exitCode != 0)
 					throw new Exception($"{clientFilePath} returned {exitCode}");
 
@@ -531,9 +532,9 @@ namespace DPloy.Distributor
 			_services.Stop(serviceName);
 		}
 
-		private void KillProcessesPrivate(string processName)
+		private int KillProcessesPrivate(string processName)
 		{
-			_processes.KillAll(processName);
+			return _processes.KillAll(processName);
 		}
 
 		private int ExecuteCommandPrivate(string cmd)
@@ -541,7 +542,15 @@ namespace DPloy.Distributor
 			return _shell.ExecuteCommand(cmd);
 		}
 
-		private void CopyFilePrivate(string sourceFilePath, string destinationFilePath)
+		private void UnzipArchive(string sourceArchivePath, string destinationFolder, string tmpFolder, bool overwrite)
+		{
+			Log.InfoFormat("Unzipping '{0}' into '{1}'", sourceArchivePath, destinationFolder);
+
+			var destinationArchivePath = Path.Combine(tmpFolder, Path.GetFileName(sourceArchivePath));
+			_files.Unzip(destinationArchivePath, destinationFolder, overwrite);
+		}
+
+		private void CopyFilePrivate(string sourceFilePath, string destinationFilePath, bool forceCopy)
 		{
 			var fileSize = new FileInfo(sourceFilePath).Length;
 			if (IsSmallFile(fileSize))
@@ -550,7 +559,7 @@ namespace DPloy.Distributor
 			}
 			else
 			{
-				CopyFileChunked(sourceFilePath, destinationFilePath, fileSize);
+				CopyFileChunked(sourceFilePath, destinationFilePath, fileSize, forceCopy);
 			}
 		}
 
@@ -559,7 +568,7 @@ namespace DPloy.Distributor
 			_files.CreateDirectoryAsync(destinationDirectoryPath).Wait();
 		}
 
-		private void CopyDirectoryRecursivePrivate(string sourceDirectoryPath, string destinationDirectoryPath)
+		private void CopyDirectoryRecursivePrivate(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy)
 		{
 			var sourceFiles = new List<string>();
 			var destinationFiles = new List<string>();
@@ -573,7 +582,7 @@ namespace DPloy.Distributor
 				destinationFiles.Add(destinationFilePath);
 			}
 
-			CopyFilesPrivate(sourceFiles, destinationFiles);
+			CopyFilesPrivate(sourceFiles, destinationFiles, forceCopy);
 		}
 
 		[Pure]
@@ -589,7 +598,7 @@ namespace DPloy.Distributor
 			return relativePath;
 		}
 
-		private void CopyFilesPrivate(IReadOnlyList<string> sourceFiles, string destinationFolder)
+		private void CopyFilesPrivate(IReadOnlyList<string> sourceFiles, string destinationFolder, bool forceCopy)
 		{
 			var destinationFiles = new List<string>();
 			foreach (var sourceFile in sourceFiles)
@@ -597,10 +606,10 @@ namespace DPloy.Distributor
 				destinationFiles.Add(Path.Combine(destinationFolder, Path.GetFileName(sourceFile)));
 			}
 
-			CopyFilesPrivate(sourceFiles, destinationFiles);
+			CopyFilesPrivate(sourceFiles, destinationFiles, forceCopy);
 		}
 
-		private void CopyFilesPrivate(IReadOnlyList<string> sourceFiles, IReadOnlyList<string> destinationFiles)
+		private void CopyFilesPrivate(IReadOnlyList<string> sourceFiles, IReadOnlyList<string> destinationFiles, bool forceCopy)
 		{
 			var tmp = new Dictionary<string, string>();
 			for (int i = 0; i < sourceFiles.Count; ++i)
@@ -615,7 +624,7 @@ namespace DPloy.Distributor
 			foreach (var bigFile in bigFiles)
 			{
 				var destinationFilePath = tmp[bigFile];
-				CopyFilePrivate(bigFile, destinationFilePath);
+				CopyFilePrivate(bigFile, destinationFilePath, forceCopy);
 			}
 
 			var destinationSmallFilePaths = smallFiles.Select(x => tmp[x]).ToList();
@@ -707,10 +716,10 @@ namespace DPloy.Distributor
 		/// <param name="sourceFilePath"></param>
 		/// <param name="destinationFilePath"></param>
 		/// <param name="expectedFileSize"></param>
-		private void CopyFileChunked(string sourceFilePath, string destinationFilePath, long expectedFileSize)
+		private void CopyFileChunked(string sourceFilePath, string destinationFilePath, long expectedFileSize, bool forceCopy)
 		{
 			var thisHash = HashCodeCalculator.MD5(sourceFilePath);
-			if (Exists(destinationFilePath, expectedFileSize, thisHash))
+			if (!forceCopy && Exists(destinationFilePath, expectedFileSize, thisHash))
 			{
 				Log.InfoFormat("Skipping copy of '{0}' to '{1}' because the target file is already present", sourceFilePath,
 				               destinationFilePath);

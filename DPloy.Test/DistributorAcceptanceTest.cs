@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,6 +8,7 @@ using DPloy.Core;
 using DPloy.Node;
 using FluentAssertions;
 using NUnit.Framework;
+using ExitCode = DPloy.Distributor.ExitCode;
 
 namespace DPloy.Test
 {
@@ -95,6 +97,24 @@ namespace DPloy.Test
 			Execute("dwadwawdaw").Should().Be((int)Distributor.ExitCode.InvalidArguments);
 		}
 
+		[Test]
+		public void TestExecuteFileTimeout()
+		{
+			using (var node = new NodeServer())
+			{
+				var ep = new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort);
+				node.Bind(ep);
+
+				Distributor.ExitCode exitCode = ExitCode.Success;
+				new Action(() =>
+					{
+						exitCode = (Distributor.ExitCode) Deploy("ExecuteCalc.cs", new[] {ep.ToString()}, null);
+					})
+					.ExecutionTime().Should().BeLessOrEqualTo(TimeSpan.FromSeconds(1000));
+				exitCode.Should().Be(Distributor.ExitCode.ExecutionError);
+			}
+		}
+
 		private int Run(string scriptFilePath, string[] args = null)
 		{
 			var fullScriptPath = Path.Combine(AssemblySetup.ScriptsDirectory, scriptFilePath);
@@ -127,7 +147,7 @@ namespace DPloy.Test
 				args.Append(node);
 			}
 
-			if (arguments.Any())
+			if (arguments != null && arguments.Any())
 			{
 				args.Append(" --arguments");
 				foreach (var argument in arguments)

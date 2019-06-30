@@ -10,7 +10,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-		public void KillAll(string name)
+		public int KillAll(string name)
 		{
 			Log.DebugFormat("Kill all processes named '{0}'...", name);
 
@@ -21,6 +21,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 			}
 
 			Log.InfoFormat("Killed {0} process(es) named '{1}'", processes.Length, name);
+			return processes.Length;
 		}
 	}
 }

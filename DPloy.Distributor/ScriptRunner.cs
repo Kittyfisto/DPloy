@@ -134,6 +134,7 @@ namespace DPloy.Distributor
 		                          TimeSpan connectTimeout)
 		{
 			var method = FindDeployMethod(script);
+
 			if (nodeAddresses.Count == 1)
 			{
 				return DeployTo(script, method, consoleWriter, nodeAddresses[0], arguments, connectTimeout);
@@ -172,6 +173,9 @@ namespace DPloy.Distributor
 			if (!HasDeploySignature(method))
 				throw new
 					ScriptExecutionException($"Expected an entry with the following signature '{expectedSignature}' but '{method.Name}' has an incompatible signature!");
+
+			Log.DebugFormat("Using entry point '{0}'", method);
+
 			return method;
 		}
 
@@ -209,6 +213,8 @@ namespace DPloy.Distributor
 		                             IEnumerable<string> arguments,
 		                             TimeSpan connectTimeout)
 		{
+			Log.InfoFormat("Executing '{0}' for '{1}'", method, nodeAddress);
+
 			using (var distributor = new Distributor(operationTracker))
 			using (var node = distributor.ConnectTo(nodeAddress, connectTimeout))
 			{

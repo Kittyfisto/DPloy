@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Reflection;
+using System.Threading.Tasks;
 using DPloy.Core;
 using DPloy.Core.SharpRemoteInterfaces;
 using log4net;
@@ -16,7 +16,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		#region Implementation of IShell
 
-		public int ExecuteFile(string file, string commandLine)
+		public int ExecuteProcess(string file, string commandLine, TimeSpan timeout)
 		{
 			var fullFilePath = Paths.NormalizeAndEvaluate(file);
 			Log.InfoFormat("Executing '{0} {1}'...", fullFilePath, commandLine);
@@ -36,10 +36,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 						FileName = fullFilePath,
 						Arguments = commandLine
 					};
-					process.Start();
-
-					var output = process.StandardOutput.ReadToEnd();
-					process.WaitForExit();
+					ExecuteProcess(process, timeout);
 				}
 				catch (Exception e)
 				{
@@ -54,6 +51,34 @@ namespace DPloy.Node.SharpRemoteImplementations
 				Log.InfoFormat("The command '{0} {1}' returned '{2}'", fullFilePath, commandLine, exitCode);
 
 				return exitCode;
+			}
+		}
+
+		private static void ExecuteProcess(Process process, TimeSpan timeout)
+		{
+			process.Start();
+			var task = Task.Factory.StartNew(() =>
+			{
+				var output = process.StandardOutput.ReadToEnd();
+				process.WaitForExit();
+			});
+
+			if (!task.Wait(timeout))
+			{
+				TryKill(process);
+				throw new TimeoutException($"The process failed to exit with {(int)timeout.TotalSeconds}s, killing it");
+			}
+		}
+
+		private static void TryKill(Process process)
+		{
+			try
+			{
+				process.Kill();
+			}
+			catch (Exception e)
+			{
+				Log.WarnFormat("Unable to kill process: {0}", e);
 			}
 		}
 
