@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using DPloy.Distributor.Exceptions;
 
 namespace DPloy.Distributor.Output
@@ -7,8 +9,9 @@ namespace DPloy.Distributor.Output
 	internal sealed class ConsoleWriterOperation
 		: IOperation
 	{
-		public const string Ok    = " [  OK  ] ";
-		public const string Error = " [FAILED] ";
+		public const string Ok      = " [   OK   ] ";
+		public const string Error   = " [ FAILED ] ";
+		public const string Timeout = " [TIMEDOUT] ";
 
 		private readonly TextWriter _writer;
 		private readonly string _message;
@@ -38,7 +41,7 @@ namespace DPloy.Distributor.Output
 		public void Failed(Exception exception)
 		{
 			FillLine();
-			WriteOperationFailed();
+			WriteOperationFailed(exception);
 			dynamic e = exception;
 			WriteErrorMessage(e);
 		}
@@ -48,9 +51,9 @@ namespace DPloy.Distributor.Output
 			WriteLine(Ok, ConsoleColor.Green);
 		}
 
-		private void WriteOperationFailed()
+		private void WriteOperationFailed(Exception exception)
 		{
-			WriteLine(Error, ConsoleColor.Red);
+			WriteLine(IsTimeout(exception) ? Timeout : Error, ConsoleColor.Red);
 		}
 
 		private void FillLine()
@@ -98,6 +101,24 @@ namespace DPloy.Distributor.Output
 			{
 				Console.ForegroundColor = previousForegroundColor;
 			}
+		}
+
+		private static bool IsTimeout(Exception exception)
+		{
+			var exceptions = Flatten(exception);
+			return exceptions.OfType<TimeoutException>().Any();
+		}
+
+		private static IReadOnlyList<Exception> Flatten(Exception exception)
+		{
+			var exceptions = new List<Exception>();
+			while (exception != null)
+			{
+				exceptions.Add(exception);
+				exception = exception.InnerException;
+			}
+
+			return exceptions;
 		}
 	}
 }

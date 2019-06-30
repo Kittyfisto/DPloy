@@ -22,6 +22,18 @@ namespace DPloy.Test
 			message.Should().Contain("Unable to find that goddamn file");
 		}
 
+		[Test]
+		public void TestTimeout()
+		{
+			var machineName = "That one PC in the basement";
+			var exception = new RemoteNodeException(machineName,
+			                                        new TimeoutException("The operation took too goddamn long"));
+			var message = WriteFailed(exception, verbose: false);
+			message.Should().Contain("TIMEDOUT");
+			message.Should().Contain($"Machine: {machineName}");
+			message.Should().Contain("The operation took too goddamn long");
+		}
+
 		[Pure]
 		private static string WriteFailed(Exception e, bool verbose)
 		{

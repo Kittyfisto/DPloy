@@ -105,13 +105,13 @@ namespace DPloy.Test
 				var ep = new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort);
 				node.Bind(ep);
 
-				Distributor.ExitCode exitCode = ExitCode.Success;
+				var exitCode = ExitCode.Success;
 				new Action(() =>
 					{
-						exitCode = (Distributor.ExitCode) Deploy("ExecuteCalc.cs", new[] {ep.ToString()}, null);
+						exitCode = (ExitCode) Deploy("ExecuteCalc.cs", new[] {ep.ToString()}, null);
 					})
 					.ExecutionTime().Should().BeLessOrEqualTo(TimeSpan.FromSeconds(1000));
-				exitCode.Should().Be(Distributor.ExitCode.ExecutionError);
+				exitCode.Should().Be(ExitCode.ExecutionError);
 			}
 		}
 
