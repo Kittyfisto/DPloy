@@ -63,7 +63,6 @@
     <Compile Include="SharpRemoteImplementations\Network.cs" />
     <Compile Include="SharpRemoteImplementations\Processes.cs" />
     <Compile Include="SharpRemoteImplementations\Services.cs" />
-    <Compile Include="SharpRemoteImplementations\Shell.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

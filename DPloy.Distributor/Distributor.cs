@@ -2,18 +2,22 @@
 using System.Collections.Generic;
 using System.Net;
 using DPloy.Core.PublicApi;
+using DPloy.Core.SharpRemoteImplementations;
 using DPloy.Distributor.Output;
 
 namespace DPloy.Distributor
 {
 	internal sealed class Distributor
-		: IDisposable
+		: IDistributor
+		, IDisposable
 	{
+		private readonly Shell _shell;
 		private readonly List<NodeClient> _clients;
 		private readonly IOperationTracker _operationTracker;
 
 		public Distributor(IOperationTracker operationTracker)
 		{
+			_shell = new Shell();
 			_operationTracker = operationTracker;
 			_clients = new List<NodeClient>();
 		}
@@ -53,6 +57,24 @@ namespace DPloy.Distributor
 					client.Dispose();
 					_clients.Remove(client);
 				}
+				throw;
+			}
+		}
+
+		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null)
+		{
+			var operation = _operationTracker.BeginExecuteCommand(clientFilePath);
+			try
+			{
+				var exitCode = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1));
+				if (exitCode != 0)
+					throw new Exception($"{clientFilePath} returned {exitCode}");
+
+				operation.Success();
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
 				throw;
 			}
 		}

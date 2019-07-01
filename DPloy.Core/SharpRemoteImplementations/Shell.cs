@@ -3,13 +3,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using DPloy.Core;
 using DPloy.Core.SharpRemoteInterfaces;
 using log4net;
 
-namespace DPloy.Node.SharpRemoteImplementations
+namespace DPloy.Core.SharpRemoteImplementations
 {
-	internal sealed class Shell
+	public sealed class Shell
 		: IShell
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
@@ -31,6 +30,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 					process.StartInfo = new ProcessStartInfo
 					{
 						RedirectStandardOutput = true,
+						RedirectStandardError = true,
 						WindowStyle = ProcessWindowStyle.Hidden,
 						UseShellExecute = false,
 						FileName = fullFilePath,
@@ -60,7 +60,11 @@ namespace DPloy.Node.SharpRemoteImplementations
 			var task = Task.Factory.StartNew(() =>
 			{
 				var output = process.StandardOutput.ReadToEnd();
+				var error = process.StandardError.ReadToEnd();
 				process.WaitForExit();
+
+				Log.DebugFormat("StandardOutput: {0}", output);
+				Log.DebugFormat("StandardError: {0}", error);
 			});
 
 			if (!task.Wait(timeout))

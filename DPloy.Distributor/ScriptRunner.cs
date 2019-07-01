@@ -181,29 +181,31 @@ namespace DPloy.Distributor
 
 		private static bool HasDeploySignature(MethodInfo method)
 		{
-			if (method.ReturnType != typeof(void) &&
-			    method.ReturnType != typeof(int))
-				return false;
-
-			var parameters = method.GetParameters();
-			if (parameters.Length > 2 ||
-			    parameters.Length == 0)
-				return false;
-
-			if (parameters[0].ParameterType != typeof(INode) ||
-			    parameters[0].IsRetval ||
-			    parameters[0].IsOut)
-				return false;
-
-			if (parameters.Length == 2)
+			var signatures = new List<MethodSignature>
 			{
-				if (parameters[1].ParameterType != typeof(string[]) ||
-				    parameters[1].IsRetval ||
-				    parameters[1].IsOut)
-					return false;
-			}
-
-			return true;
+				new MethodSignature
+				{
+					ReturnType = typeof(void),
+					ParameterTypes = new[] {typeof(INode)}
+				},
+				new MethodSignature
+				{
+					ReturnType = typeof(void),
+					ParameterTypes = new[] {typeof(INode), typeof(string[])}
+				},
+				new MethodSignature
+				{
+					ReturnType = typeof(void),
+					ParameterTypes = new[] {typeof(IDistributor), typeof(INode)}
+				},
+				new MethodSignature
+				{
+					ReturnType = typeof(void),
+					ParameterTypes = new[] {typeof(IDistributor), typeof(INode), typeof(string[])}
+				}
+			};
+			signatures.AddRange(signatures.ToList().Select(x => x.WithReturnType(typeof(int))));
+			return signatures.Any(x => x.IsCompatibleTo(method));
 		}
 
 		private static int DeployTo(object script,
@@ -218,13 +220,15 @@ namespace DPloy.Distributor
 			using (var distributor = new Distributor(operationTracker))
 			using (var node = distributor.ConnectTo(nodeAddress, connectTimeout))
 			{
-				object[] args;
-				if (method.GetParameters().Length == 2)
-					args = new object[] {node, arguments};
-				else
-					args = new object[] {node};
+				var args = new List<object>();
+				var parameters = method.GetParameters();
+				if (parameters[0].ParameterType == typeof(IDistributor))
+					args.Add(distributor);
+				args.Add(node);
+				if (parameters[parameters.Length - 1].ParameterType == typeof(string[]))
+					args.Add(arguments);
 
-				var ret = InvokeMethod(script, method, args);
+				var ret = InvokeMethod(script, method, args.ToArray());
 				if (method.ReturnType == typeof(int))
 					return (int) ret;
 

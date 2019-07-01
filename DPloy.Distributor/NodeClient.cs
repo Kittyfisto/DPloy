@@ -123,7 +123,7 @@ namespace DPloy.Distributor
 		public void Dispose()
 		{
 			var socket = _socket;
-			if (socket != null)
+			if (socket != null && !socket.IsDisposed)
 			{
 				var operation = _operationTracker.BeginDisconnect(socket.RemoteEndPoint);
 				try

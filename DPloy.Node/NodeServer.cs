@@ -5,6 +5,7 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using DPloy.Core;
+using DPloy.Core.SharpRemoteImplementations;
 using DPloy.Core.SharpRemoteInterfaces;
 using DPloy.Node.SharpRemoteImplementations;
 using log4net;

@@ -133,6 +133,20 @@ namespace DPloy.Test
 			}
 		}
 
+		[Test]
+		[Description("Verifies that a distributor object is forwarded to the script, if it desires one")]
+		public void TestDeployWithDistributor()
+		{
+			using (var node = new NodeServer())
+			{
+				var ep = new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort);
+				node.Bind(ep);
+
+				// The script fails if no distributor is given
+				Deploy("DeployWithDistributor.cs", new[] { ep.ToString() }, null).Should().Be((int) ExitCode.Success);
+			}
+		}
+
 		private int Run(string scriptFilePath, string[] args = null)
 		{
 			var fullScriptPath = Path.Combine(AssemblySetup.ScriptsDirectory, scriptFilePath);
