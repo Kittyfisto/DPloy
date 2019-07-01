@@ -20,6 +20,7 @@ namespace DPloy.Distributor.Output
 		IOperation BeginDeleteFile(string destinationFilePath);
 		IOperation BeginDownloadFile(string sourceFileUri, string destinationDirectory);
 		IOperation BeginCreateFile(string destinationFilePath);
+		IOperation BeginExecute(string image, string commandLine);
 		IOperation BeginExecuteCommand(string cmd);
 		IOperation BeginStartService(string serviceName);
 		IOperation BeginStopService(string serviceName);

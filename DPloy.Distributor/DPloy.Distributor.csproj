@@ -99,6 +99,7 @@
     <Compile Include="AssemblyLoader.cs" />
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="Exceptions\NotConnectedException.cs" />
+    <Compile Include="Exceptions\ProcessReturnedErrorException.cs" />
     <Compile Include="MethodSignature.cs" />
     <Compile Include="Options\ListOptions.cs" />
     <Compile Include="Output\NodeTracker.cs" />

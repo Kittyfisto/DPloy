@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteImplementations;
+using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Output;
 
 namespace DPloy.Distributor
@@ -61,14 +62,14 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null)
+		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true)
 		{
 			var operation = _operationTracker.BeginExecuteCommand(clientFilePath);
 			try
 			{
-				var exitCode = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1));
-				if (exitCode != 0)
-					throw new Exception($"{clientFilePath} returned {exitCode}");
+				var output = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1), printStdOutOnFailure);
+				if (output.ExitCode != 0)
+					throw new ProcessReturnedErrorException(clientFilePath, output, printStdOutOnFailure);
 
 				operation.Success();
 			}

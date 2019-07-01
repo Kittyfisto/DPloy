@@ -15,7 +15,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 
 		#region Implementation of IShell
 
-		public int StartAndWaitForExit(string file, string commandLine, TimeSpan timeout)
+		public ProcessOutput StartAndWaitForExit(string file, string commandLine, TimeSpan timeout, bool printStdOutOnFailure)
 		{
 			var fullFilePath = Paths.NormalizeAndEvaluate(file);
 			Log.InfoFormat("Executing '{0} {1}'...", fullFilePath, commandLine);
@@ -36,7 +36,9 @@ namespace DPloy.Core.SharpRemoteImplementations
 						FileName = fullFilePath,
 						Arguments = commandLine
 					};
-					StartAndWaitForExit(process, timeout);
+					var output = StartAndWaitForExit(process, timeout, printStdOutOnFailure);
+					Log.InfoFormat("The command '{0} {1}' returned '{2}'", fullFilePath, commandLine, output.ExitCode);
+					return output;
 				}
 				catch (Exception e)
 				{
@@ -46,21 +48,18 @@ namespace DPloy.Core.SharpRemoteImplementations
 						e);
 					throw;
 				}
-
-				var exitCode = process.ExitCode;
-				Log.InfoFormat("The command '{0} {1}' returned '{2}'", fullFilePath, commandLine, exitCode);
-
-				return exitCode;
 			}
 		}
 
-		private static void StartAndWaitForExit(Process process, TimeSpan timeout)
+		private static ProcessOutput StartAndWaitForExit(Process process, TimeSpan timeout, bool printStdOutOnFailure)
 		{
+			string output = null;
+			string error = null;
 			process.Start();
 			var task = Task.Factory.StartNew(() =>
 			{
-				var output = process.StandardOutput.ReadToEnd();
-				var error = process.StandardError.ReadToEnd();
+				output = process.StandardOutput.ReadToEnd();
+				error = process.StandardError.ReadToEnd();
 				process.WaitForExit();
 
 				Log.DebugFormat("StandardOutput: {0}", output);
@@ -74,6 +73,13 @@ namespace DPloy.Core.SharpRemoteImplementations
 				var message = $"The process failed to exit with {(int) timeout.TotalSeconds}s, killing it";
 				throw new TimeoutException(message);
 			}
+
+			return new ProcessOutput
+			{
+				ExitCode = process.ExitCode,
+				StandardOutput = output,
+				StandardError = error
+			};
 		}
 
 		private static void TryKill(Process process)

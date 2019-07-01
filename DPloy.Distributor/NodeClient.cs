@@ -10,6 +10,7 @@ using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteInterfaces;
+using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Output;
 using DPloy.Distributor.SharpRemoteImplementations;
 using log4net;
@@ -103,7 +104,7 @@ namespace DPloy.Distributor
 			ThrowIfIncompatible(expectedDescription.ReturnParameter, actualDescription.ReturnParameter);
 
 			if (expectedDescription.Parameters.Count != actualDescription.Parameters.Length)
-				throw new NotImplementedException($"The remote method has a different amount of parameters");
+				throw new NotImplementedException($"The remote method has a different amount of parameters: Expected {expectedDescription} but found {actualDescription}");
 
 			for(int i = 0; i < expectedDescription.Parameters.Count; ++i)
 			{
@@ -454,15 +455,15 @@ namespace DPloy.Distributor
 			Execute(destinationFilePath, commandLine ?? "/S");
 		}
 
-		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null)
+		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true)
 		{
 			Log.InfoFormat("Executing '{0} {1}'...", clientFilePath, commandLine);
 			var operation = _operationTracker.BeginExecuteCommand(clientFilePath);
 			try
 			{
-				var exitCode = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ??  TimeSpan.FromMilliseconds(-1));
-				if (exitCode != 0)
-					throw new Exception($"{clientFilePath} returned {exitCode}");
+				var output = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1), printStdOutOnFailure);
+				if (output.ExitCode != 0)
+					throw new ProcessReturnedErrorException(clientFilePath, output, printStdOutOnFailure);
 
 				operation.Success();
 			}

@@ -103,6 +103,13 @@ namespace DPloy.Distributor.Output
 			return operation;
 		}
 
+		public IOperation BeginExecute(string image, string commandLine)
+		{
+			var operation = new Operation();
+			_operations.Add(operation);
+			return operation;
+		}
+
 		public IOperation BeginExecuteCommand(string cmd)
 		{
 			var operation = new Operation();

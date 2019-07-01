@@ -34,7 +34,12 @@ namespace DPloy.Core.PublicApi
 		///    The amount of time this method should wait for the process to exit,
 		///    if no value is defined then it waits for an infinite amount of time.
 		/// </param>
+		/// <param name="printStdOutOnFailure">
+		///    When set to true, then the STDOUT of the started process will be printed
+		///    to the console if the process exited with a non-zero value.
+		///    When set to false, then the STDOUT of the started process will never be printed.
+		/// </param>
 		/// <exception cref="Exception">In case the process exits with a non-zero value</exception>
-		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null);
+		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true);
 	}
 }
