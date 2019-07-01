@@ -16,7 +16,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		#region Implementation of IShell
 
-		public int ExecuteProcess(string file, string commandLine, TimeSpan timeout)
+		public int StartAndWaitForExit(string file, string commandLine, TimeSpan timeout)
 		{
 			var fullFilePath = Paths.NormalizeAndEvaluate(file);
 			Log.InfoFormat("Executing '{0} {1}'...", fullFilePath, commandLine);
@@ -36,7 +36,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 						FileName = fullFilePath,
 						Arguments = commandLine
 					};
-					ExecuteProcess(process, timeout);
+					StartAndWaitForExit(process, timeout);
 				}
 				catch (Exception e)
 				{
@@ -54,7 +54,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 			}
 		}
 
-		private static void ExecuteProcess(Process process, TimeSpan timeout)
+		private static void StartAndWaitForExit(Process process, TimeSpan timeout)
 		{
 			process.Start();
 			var task = Task.Factory.StartNew(() =>
@@ -66,7 +66,9 @@ namespace DPloy.Node.SharpRemoteImplementations
 			if (!task.Wait(timeout))
 			{
 				TryKill(process);
-				throw new TimeoutException($"The process failed to exit with {(int)timeout.TotalSeconds}s, killing it");
+
+				var message = $"The process failed to exit with {(int) timeout.TotalSeconds}s, killing it";
+				throw new TimeoutException(message);
 			}
 		}
 

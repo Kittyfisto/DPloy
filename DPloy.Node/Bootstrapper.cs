@@ -28,7 +28,7 @@ namespace DPloy.Node
 			return Parser.Default.ParseArguments<CommandLineOptions>(args)
 				.MapResult(
 					(CommandLineOptions options) => Application.Run(options),
-					errs => 1);
+					errs => (int)ExitCode.InvalidArgument);
 		}
 
 		private static void PrintFatalException(Exception e)

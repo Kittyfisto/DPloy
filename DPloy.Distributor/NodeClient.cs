@@ -451,16 +451,16 @@ namespace DPloy.Distributor
 			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
 
 			CopyFile(installerPath, destinationFilePath, forceCopy);
-			RunProcess(destinationFilePath, commandLine ?? "/S");
+			Execute(destinationFilePath, commandLine ?? "/S");
 		}
 
-		public void RunProcess(string clientFilePath, string commandLine = null, TimeSpan? timeout = null)
+		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null)
 		{
 			Log.InfoFormat("Executing '{0} {1}'...", clientFilePath, commandLine);
 			var operation = _operationTracker.BeginExecuteCommand(clientFilePath);
 			try
 			{
-				var exitCode = _shell.ExecuteProcess(clientFilePath, commandLine, timeout ?? TimeSpan.MaxValue);
+				var exitCode = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ??  TimeSpan.FromMilliseconds(-1));
 				if (exitCode != 0)
 					throw new Exception($"{clientFilePath} returned {exitCode}");
 

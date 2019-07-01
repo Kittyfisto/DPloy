@@ -48,7 +48,7 @@ namespace DPloy.Core.PublicApi
 		///    if no value is defined then it waits for an infinite amount of time.
 		/// </param>
 		/// <exception cref="Exception">In case the process exits with a non-zero value</exception>
-		void RunProcess(string clientFilePath, string commandLine = null, TimeSpan? timeout = null);
+		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null);
 
 		int ExecuteCommand(string cmd);
 

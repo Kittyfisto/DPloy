@@ -69,7 +69,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptPreprocessorTest.cs" />
     <Compile Include="Scripts\DeployWithParameter.cs" />
-    <Compile Include="Scripts\ExecuteCalc.cs" />
+    <Compile Include="Scripts\ExecuteCmd.cs" />
+    <Compile Include="Scripts\ExecuteDir.cs" />
     <Compile Include="ServicesTest.cs" />
     <Compile Include="TaskListTest.cs" />
     <None Include="app.config" />

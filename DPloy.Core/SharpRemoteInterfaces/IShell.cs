@@ -10,10 +10,10 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		/// </summary>
 		/// <param name="file"></param>
 		/// <param name="commandLine"></param>
-		/// <param name="timeout"></param>
+		/// <param name="timeout">The maximum amount of time to wait for the process to exit, -1ms is interpreted as an infinite amount of time</param>
 		/// <returns></returns>
 		[Invoke(Dispatch.SerializePerObject)]
-		int ExecuteProcess(string file, string commandLine, TimeSpan timeout);
+		int StartAndWaitForExit(string file, string commandLine, TimeSpan timeout);
 
 		[Invoke(Dispatch.SerializePerObject)]
 		int ExecuteCommand(string command);

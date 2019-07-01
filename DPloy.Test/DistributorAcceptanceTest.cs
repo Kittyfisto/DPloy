@@ -98,7 +98,7 @@ namespace DPloy.Test
 		}
 
 		[Test]
-		public void TestExecuteFileTimeout()
+		public void TestStartProcessWithTimeout()
 		{
 			using (var node = new NodeServer())
 			{
@@ -108,10 +108,28 @@ namespace DPloy.Test
 				var exitCode = ExitCode.Success;
 				new Action(() =>
 					{
-						exitCode = (ExitCode) Deploy("ExecuteCalc.cs", new[] {ep.ToString()}, null);
+						exitCode = (ExitCode) Deploy("ExecuteCmd.cs", new[] {ep.ToString()}, null);
 					})
-					.ExecutionTime().Should().BeLessOrEqualTo(TimeSpan.FromSeconds(1000));
+					.ExecutionTime().Should().BeLessOrEqualTo(TimeSpan.FromSeconds(10));
 				exitCode.Should().Be(ExitCode.ExecutionError);
+			}
+		}
+
+		[Test]
+		public void TestStartProcessWithoutTimeout()
+		{
+			using (var node = new NodeServer())
+			{
+				var ep = new IPEndPoint(IPAddress.Loopback, Constants.ConnectionPort);
+				node.Bind(ep);
+
+				var exitCode = ExitCode.Success;
+				new Action(() =>
+					{
+						exitCode = (ExitCode)Deploy("ExecuteDir.cs", new[] { ep.ToString() }, null);
+					})
+					.ExecutionTime().Should().BeLessOrEqualTo(TimeSpan.FromSeconds(10));
+				exitCode.Should().Be(ExitCode.Success);
 			}
 		}
 

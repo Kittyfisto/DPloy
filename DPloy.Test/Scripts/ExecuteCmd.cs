@@ -3,11 +3,11 @@ using DPloy.Core.PublicApi;
 
 namespace DPloy.Test.Scripts
 {
-	public class ExecuteCalc
+	public class ExecuteCmd
 	{
 		public void Deploy(INode node)
 		{
-			node.RunProcess(@"%System%\cmd.exe", timeout: TimeSpan.FromSeconds(1));
+			node.Execute(@"%System%\cmd.exe", timeout: TimeSpan.FromSeconds(1));
 		}
 	}
 }
