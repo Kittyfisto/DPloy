@@ -61,8 +61,7 @@ namespace DPloy.Test
 			WriteFile(fooPath, foo);
 
 			new Action(() => PreprocessFile(fooPath))
-				.Should().Throw<AggregateException>()
-				.WithInnerException<ScriptCompilationException>();
+				.Should().Throw<ScriptCompilationException>();
 		}
 
 		[Test]
@@ -78,8 +77,7 @@ namespace DPloy.Test
 			WriteFile(barPath, bar);
 
 			new Action(() => PreprocessFile(fooPath))
-				.Should().Throw<AggregateException>()
-				.WithInnerException<ScriptCompilationException>();
+				.Should().Throw<ScriptCompilationException>();
 		}
 
 		[Test]
@@ -120,15 +118,13 @@ namespace DPloy.Test
 
 		private void WriteFile(string filePath, string script)
 		{
-			_fileSystem.WriteAllBytes(filePath, Encoding.UTF8.GetBytes(script)).Wait();
+			_fileSystem.WriteAllBytes(filePath, Encoding.UTF8.GetBytes(script));
 		}
 
 		private string PreprocessFile(string filePath)
 		{
 			var preprocessor = new ScriptPreprocessor(_fileSystem);
-			var task = preprocessor.ProcessFileAsync(filePath, new string[0]);
-			task.Wait(TimeSpan.FromSeconds(30)).Should().BeTrue("because parsing should have finished by now");
-			return task.Result;
+			return preprocessor.ProcessFile(filePath, new string[0]);
 		}
 	}
 }

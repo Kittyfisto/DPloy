@@ -31,7 +31,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 		{
 			filePath = NormalizeAndEvaluate(filePath);
 
-			var info = _filesystem.GetFileInfo(filePath).Capture().Result;
+			var info = _filesystem.GetFileInfo(filePath);
 
 			if (!info.Exists)
 			{
@@ -78,7 +78,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			var fileName = Path.GetFileName(filePathPattern);
 
 			var absolutePath = NormalizeAndEvaluate(path);
-			var files = _filesystem.EnumerateFiles(absolutePath, fileName, SearchOption.TopDirectoryOnly, tolerateNonExistantPath: true).Result;
+			var files = _filesystem.EnumerateFiles(absolutePath, fileName, SearchOption.TopDirectoryOnly, tolerateNonExistantPath: true);
 
 			foreach(var file in files)
 				DeleteFile(file);
@@ -97,7 +97,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			var directoryPath = Path.GetDirectoryName(filePath);
 			CreateDirectoryIfNecessary(directoryPath);
 
-			var fileStream = _filesystem.OpenWrite(filePath).Result;
+			var fileStream = _filesystem.OpenWrite(filePath);
 			_files.Add(filePath, fileStream);
 
 			Log.InfoFormat("Created file '{0}'", filePath);
@@ -209,7 +209,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			filePath = NormalizeAndEvaluate(filePath);
 
 			using (var algorithm = SHA256.Create())
-			using (var stream = _filesystem.OpenRead(filePath).Result)
+			using (var stream = _filesystem.OpenRead(filePath))
 			{
 				return HashCodeCalculator.CalculateHash(stream, algorithm);
 			}
@@ -220,7 +220,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			filePath = NormalizeAndEvaluate(filePath);
 
 			using (var algorithm = MD5.Create())
-			using (var stream = _filesystem.OpenRead(filePath).Result)
+			using (var stream = _filesystem.OpenRead(filePath))
 			{
 				return HashCodeCalculator.CalculateHash(stream, algorithm);
 			}
@@ -241,7 +241,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			var actualArchivePath = NormalizeAndEvaluate(archivePath);
 			var actualDestinationFolder = NormalizeAndEvaluate(destinationFolder);
 
-			using (var stream = _filesystem.OpenRead(actualArchivePath).Result)
+			using (var stream = _filesystem.OpenRead(actualArchivePath))
 			using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, true))
 			{
 				foreach (var entry in archive.Entries)
@@ -252,13 +252,13 @@ namespace DPloy.Core.SharpRemoteImplementations
 
 						if (overwrite)
 							DeleteFile(destinationFilePath);
-						else if (_filesystem.FileExists(destinationFilePath).Result)
+						else if (_filesystem.FileExists(destinationFilePath))
 							throw new IOException($"The file '{destinationFilePath}' already exists");
 
 						var destinationPath = Path.GetDirectoryName(destinationFilePath);
 						CreateDirectoryIfNecessary(destinationPath);
 
-						using (var destination = _filesystem.OpenWrite(destinationFilePath).Result)
+						using (var destination = _filesystem.OpenWrite(destinationFilePath))
 						{
 							source.CopyTo(destination);
 						}
@@ -271,10 +271,10 @@ namespace DPloy.Core.SharpRemoteImplementations
 		{
 			filePath = NormalizeAndEvaluate(filePath);
 
-			if (_filesystem.FileExists(filePath).Result)
+			if (_filesystem.FileExists(filePath))
 			{
 				Log.DebugFormat("Deleting file '{0}'...", filePath);
-				_filesystem.DeleteFile(filePath).Wait();
+				_filesystem.DeleteFile(filePath);
 				Log.InfoFormat("Deleted file '{0}'", filePath);
 			}
 		}
@@ -285,8 +285,8 @@ namespace DPloy.Core.SharpRemoteImplementations
 
 			DeleteFile(filePath);
 			var directory = Path.GetDirectoryName(filePath);
-			_filesystem.CreateDirectory(directory).Wait();
-			_filesystem.WriteAllBytes(filePath, file.Content).Wait();
+			_filesystem.CreateDirectory(directory);
+			_filesystem.WriteAllBytes(filePath, file.Content);
 		}
 
 		#endregion
@@ -295,7 +295,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 		{
 			Log.DebugFormat("Creating directory '{0}'...", directoryPath);
 
-			if (!_filesystem.DirectoryExists(directoryPath).Result)
+			if (!_filesystem.DirectoryExists(directoryPath))
 			{
 				_filesystem.CreateDirectory(directoryPath);
 				Log.InfoFormat("Created directory '{0}'", directoryPath);

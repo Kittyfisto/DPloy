@@ -21,7 +21,7 @@ namespace DPloy.Test
 		public void Setup()
 		{
 			_filesystem = new InMemoryFilesystem();
-			_filesystem.CurrentDirectory = _filesystem.Roots.Result.First().FullName;
+			_filesystem.CurrentDirectory = _filesystem.Roots.First().FullName;
 		}
 
 		#region Sha256
@@ -31,8 +31,8 @@ namespace DPloy.Test
 		{
 			var file = new Files(_filesystem);
 
-			_filesystem.WriteAllBytes(@"1byte_a.txt", Encoding.UTF8.GetBytes("a")).Wait();
-			_filesystem.WriteAllBytes(@"1byte_b.txt", Encoding.UTF8.GetBytes("b")).Wait();
+			_filesystem.WriteAllBytes(@"1byte_a.txt", Encoding.UTF8.GetBytes("a"));
+			_filesystem.WriteAllBytes(@"1byte_b.txt", Encoding.UTF8.GetBytes("b"));
 
 			var hashA = file.CalculateSha256(@"1byte_a.txt");
 			var hashB = file.CalculateSha256(@"1byte_b.txt");
@@ -85,7 +85,7 @@ namespace DPloy.Test
 			var file = new Files(_filesystem);
 
 			var path = "4k.txt";
-			_filesystem.WriteAllBytes(path, new byte[4096]).Wait();
+			_filesystem.WriteAllBytes(path, new byte[4096]);
 
 			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
@@ -102,8 +102,8 @@ namespace DPloy.Test
 		{
 			var file = new Files(_filesystem);
 
-			_filesystem.WriteAllBytes("a.txt", Encoding.UTF8.GetBytes("a")).Wait();
-			_filesystem.WriteAllBytes("b.txt", Encoding.UTF8.GetBytes("b")).Wait();
+			_filesystem.WriteAllBytes("a.txt", Encoding.UTF8.GetBytes("a"));
+			_filesystem.WriteAllBytes("b.txt", Encoding.UTF8.GetBytes("b"));
 
 			var hashA = file.CalculateMD5("a.txt");
 			var hashB = file.CalculateMD5("b.txt");
@@ -117,7 +117,7 @@ namespace DPloy.Test
 			var file = new Files(_filesystem);
 
 			var path = "a.txt";
-			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a")).Wait();
+			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a"));
 			var hashA = file.CalculateMD5(path);
 			var hashB = file.CalculateMD5(path);
 
@@ -143,7 +143,7 @@ namespace DPloy.Test
 			var file = new Files(_filesystem);
 			var path = @"1byte_a.txt";
 
-			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a")).Wait();
+			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a"));
 			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
@@ -156,7 +156,7 @@ namespace DPloy.Test
 			var file = new Files(_filesystem);
 			var path = @"4k.txt";
 
-			_filesystem.WriteAllBytes(path, new byte[4096]).Wait();
+			_filesystem.WriteAllBytes(path, new byte[4096]);
 			var hash = file.CalculateMD5(path);
 			var actualHash = CalculateMD5(path);
 
@@ -176,9 +176,9 @@ namespace DPloy.Test
 
 			files.DeleteFilesAsync("*.txt").Wait();
 
-			_filesystem.FileExists("a.txt").Result.Should().BeFalse();
-			_filesystem.FileExists("b.txt").Result.Should().BeFalse();
-			_filesystem.FileExists("c.csv").Result.Should().BeTrue();
+			_filesystem.FileExists("a.txt").Should().BeFalse();
+			_filesystem.FileExists("b.txt").Should().BeFalse();
+			_filesystem.FileExists("c.csv").Should().BeTrue();
 		}
 
 		[Test]
@@ -193,7 +193,7 @@ namespace DPloy.Test
 		public void TestUnzip()
 		{
 			const string archivePath = "foo.zip";
-			using (var archiveStream = _filesystem.OpenWrite(archivePath).Result)
+			using (var archiveStream = _filesystem.OpenWrite(archivePath))
 			{
 				using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create))
 				{
@@ -211,12 +211,8 @@ namespace DPloy.Test
 			file.Unzip(archivePath, targetFolder, overwrite: false);
 
 			var targetFile = Path.Combine(targetFolder, "Test.txt");
-			_filesystem.FileExists(targetFile).Result.Should().BeTrue();
-			using (var stream = new MemoryStream(_filesystem.ReadAllBytes(targetFile).Result))
-			using (var reader = new StreamReader(stream))
-			{
-				reader.ReadToEnd().Should().Be("Hello, World!");
-			}
+			_filesystem.FileExists(targetFile).Should().BeTrue();
+			_filesystem.ReadAllText(targetFile).Should().Be("Hello, World!");
 		}
 
 		[Test]
@@ -259,7 +255,7 @@ namespace DPloy.Test
 		{
 			var archivePath = "foo.zip";
 
-			using (var archiveStream = _filesystem.OpenWrite(archivePath).Result)
+			using (var archiveStream = _filesystem.OpenWrite(archivePath))
 			using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create))
 			{
 				var entry = archive.CreateEntry("Test.txt");
@@ -272,18 +268,14 @@ namespace DPloy.Test
 
 			var targetFolder = "Unzipped";
 			var targetFile = Path.Combine(targetFolder, "Test.txt");
-			_filesystem.CreateDirectory(targetFolder).Wait();
-			_filesystem.WriteAllBytes(targetFile, Encoding.UTF8.GetBytes("Foobar")).Wait();
+			_filesystem.CreateDirectory(targetFolder);
+			_filesystem.WriteAllBytes(targetFile, Encoding.UTF8.GetBytes("Foobar"));
 
 			var file = new Files(_filesystem);
 			file.Unzip(archivePath, targetFolder, overwrite: true);
 
-			_filesystem.FileExists(targetFile).Result.Should().BeTrue();
-			using (var stream = new MemoryStream(_filesystem.ReadAllBytes(targetFile).Result))
-			using (var reader = new StreamReader(stream))
-			{
-				reader.ReadToEnd().Should().Be("Hello, World!");
-			}
+			_filesystem.FileExists(targetFile).Should().BeTrue();
+			_filesystem.ReadAllText(targetFile).Should().Be("Hello, World!");
 		}
 
 		[Test]
@@ -369,7 +361,7 @@ namespace DPloy.Test
 		private byte[] CalculateSha256(string filePath)
 		{
 			using (var sha = SHA256.Create())
-			using (var stream = _filesystem.OpenRead(filePath).Result)
+			using (var stream = _filesystem.OpenRead(filePath))
 			{
 				return sha.ComputeHash(stream);
 			}
@@ -379,7 +371,7 @@ namespace DPloy.Test
 		private byte[] CalculateMD5(string filePath)
 		{
 			using (var md5 = MD5.Create())
-			using (var stream = _filesystem.OpenRead(filePath).Result)
+			using (var stream = _filesystem.OpenRead(filePath))
 			{
 				return md5.ComputeHash(stream);
 			}

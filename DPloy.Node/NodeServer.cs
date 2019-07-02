@@ -38,7 +38,6 @@ namespace DPloy.Node
 		private readonly Processes _processes;
 		private readonly Network _network;
 		private readonly SocketEndPoint _socket;
-		private readonly SerialTaskScheduler _serialTaskScheduler;
 		private readonly DefaultTaskScheduler _taskScheduler;
 		private readonly Filesystem _filesystem;
 
@@ -61,9 +60,8 @@ namespace DPloy.Node
 				});
 			_socket.OnDisconnected += SocketOnOnDisconnected;
 
-			_serialTaskScheduler = new SerialTaskScheduler();
 			_taskScheduler = new DefaultTaskScheduler();
-			_filesystem = new Filesystem(_serialTaskScheduler, _taskScheduler);
+			_filesystem = new Filesystem(_taskScheduler);
 
 			_interfaces = new Interfaces();
 			_socket.CreateServant<IInterfaces>(ObjectIds.Interface, _interfaces);
@@ -107,7 +105,6 @@ namespace DPloy.Node
 			GC.KeepAlive(_network);
 
 			_socket?.Dispose();
-			_serialTaskScheduler?.Dispose();
 			_taskScheduler?.Dispose();
 		}
 

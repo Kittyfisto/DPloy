@@ -18,15 +18,13 @@ namespace DPloy.Distributor
 		private readonly Files _files;
 		private readonly List<NodeClient> _clients;
 		private readonly IOperationTracker _operationTracker;
-		private readonly SerialTaskScheduler _serialTaskScheduler;
 		private readonly DefaultTaskScheduler _taskScheduler;
 		private readonly Filesystem _filesystem;
 
 		public Distributor(IOperationTracker operationTracker)
 		{
-			_serialTaskScheduler = new SerialTaskScheduler();
 			_taskScheduler = new DefaultTaskScheduler();
-			_filesystem = new Filesystem(_serialTaskScheduler, _taskScheduler);
+			_filesystem = new Filesystem(_taskScheduler);
 
 			_shell = new Shell();
 			_files = new Files(_filesystem);
@@ -40,7 +38,6 @@ namespace DPloy.Distributor
 		{
 			foreach (var client in _clients) client.Dispose();
 
-			_serialTaskScheduler?.Dispose();
 			_taskScheduler?.Dispose();
 		}
 

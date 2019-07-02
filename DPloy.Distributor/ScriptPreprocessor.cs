@@ -4,7 +4,6 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using DPloy.Distributor.Exceptions;
 
 namespace DPloy.Distributor
@@ -42,10 +41,10 @@ namespace DPloy.Distributor
 		/// <param name="scriptFilePath"></param>
 		/// <param name="includeFolders"></param>
 		/// <returns>The preprocessed content of the script at the given path</returns>
-		public async Task<string> ProcessFileAsync(string scriptFilePath, IReadOnlyList<string> includeFolders)
+		public string ProcessFile(string scriptFilePath, IReadOnlyList<string> includeFolders)
 		{
-			var content = await PreProcessFileAsync(MakeAbsolute(scriptFilePath),
-			                                     PreprocessorContext.CreateFor(scriptFilePath, includeFolders));
+			var content = PreProcessFile(MakeAbsolute(scriptFilePath),
+			                             PreprocessorContext.CreateFor(scriptFilePath, includeFolders));
 			return Process(content);
 		}
 
@@ -90,36 +89,31 @@ namespace DPloy.Distributor
 			return namespaces;
 		}
 
-		private async Task<string> PreProcessFileAsync(string scriptFilePath, PreprocessorContext context)
+		private string PreProcessFile(string scriptFilePath, PreprocessorContext context)
 		{
 			try
 			{
-				using (var stream = await _fileSystem.OpenRead(scriptFilePath))
-				using (var reader = new StreamReader(stream))
+				var scriptContent = _fileSystem.ReadAllText(scriptFilePath);
+				var processedScript = new StringBuilder();
+				var lastIndex = 0;
+				foreach (Match match in ImportRegexp.Matches(scriptContent))
 				{
-					var scriptContent = await reader.ReadToEndAsync();
+					processedScript.Append(scriptContent, lastIndex, match.Index - lastIndex);
 
-					var processedScript = new StringBuilder();
-					var lastIndex = 0;
-					foreach (Match match in ImportRegexp.Matches(scriptContent))
-					{
-						processedScript.Append(scriptContent, lastIndex, match.Index - lastIndex);
+					var includedFilePath = match.Groups[groupnum: 1].Value.Trim();
+					var subScriptFilePath = ResolveScriptPath(includedFilePath, context);
+					var subScriptContent =
+						PreProcessFile(subScriptFilePath, context.CreateContextFor(subScriptFilePath));
 
-						var includedFilePath = match.Groups[groupnum: 1].Value.Trim();
-						var subScriptFilePath = await ResolveScriptPathAsync(includedFilePath, context);
-						var subScriptContent =
-							await PreProcessFileAsync(subScriptFilePath, context.CreateContextFor(subScriptFilePath));
+					processedScript.Append(subScriptContent);
 
-						processedScript.Append(subScriptContent);
-
-						lastIndex = match.Index + match.Length;
-					}
-
-					if (lastIndex < scriptContent.Length)
-						processedScript.Append(scriptContent, lastIndex, scriptContent.Length - lastIndex);
-
-					return processedScript.ToString();
+					lastIndex = match.Index + match.Length;
 				}
+
+				if (lastIndex < scriptContent.Length)
+					processedScript.Append(scriptContent, lastIndex, scriptContent.Length - lastIndex);
+
+				return processedScript.ToString();
 			}
 			catch (IOException e)
 			{
@@ -136,7 +130,7 @@ namespace DPloy.Distributor
 			return Path.Combine(_fileSystem.CurrentDirectory, scriptFilePath);
 		}
 
-		private async Task<string> ResolveScriptPathAsync(string filePath, PreprocessorContext context)
+		private string ResolveScriptPath(string filePath, PreprocessorContext context)
 		{
 			if (Path.IsPathRooted(filePath))
 				return filePath;
@@ -144,7 +138,7 @@ namespace DPloy.Distributor
 			foreach (var includeFolder in context.IncludeFolders)
 			{
 				var path = Path.Combine(includeFolder, filePath + ".cs");
-				if (await _fileSystem.FileExists(path))
+				if (_fileSystem.FileExists(path))
 					return path;
 			}
 

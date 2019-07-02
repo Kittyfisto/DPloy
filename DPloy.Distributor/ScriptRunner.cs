@@ -293,12 +293,11 @@ namespace DPloy.Distributor
 			string script;
 			try
 			{
-				using (var ioScheduler = new SerialTaskScheduler())
 				using (var taskScheduler = new DefaultTaskScheduler())
 				{
-					var filesystem = new Filesystem(ioScheduler, taskScheduler);
+					var filesystem = new Filesystem(taskScheduler);
 					var processor = new ScriptPreprocessor(filesystem);
-					script = processor.ProcessFileAsync(scriptFilePath, new string[0]).Result;
+					script = processor.ProcessFile(scriptFilePath, new string[0]);
 				}
 
 				operation.Success();
