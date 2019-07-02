@@ -110,7 +110,7 @@ namespace DPloy.Distributor.Output
 			return operation;
 		}
 
-		public IOperation BeginExecuteCommand(string cmd)
+		public IOperation BeginExecuteCommand(string cmd, string operationName)
 		{
 			var operation = new Operation();
 			_operations.Add(operation);

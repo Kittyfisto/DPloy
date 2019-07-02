@@ -490,10 +490,10 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public int ExecuteCommand(string cmd)
+		public int ExecuteCommand(string cmd, string operationName = null)
 		{
 			Log.InfoFormat("Executing command '{0}'...", cmd);
-			var operation = _operationTracker.BeginExecuteCommand(cmd);
+			var operation = _operationTracker.BeginExecuteCommand(cmd, operationName);
 			try
 			{
 				var exitCode = ExecuteCommandPrivate(cmd);

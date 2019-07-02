@@ -21,7 +21,7 @@ namespace DPloy.Distributor.Output
 		IOperation BeginDownloadFile(string sourceFileUri, string destinationDirectory);
 		IOperation BeginCreateFile(string destinationFilePath);
 		IOperation BeginExecute(string image, string commandLine, string operationName);
-		IOperation BeginExecuteCommand(string cmd);
+		IOperation BeginExecuteCommand(string cmd, string operationName);
 		IOperation BeginStartService(string serviceName);
 		IOperation BeginStopService(string serviceName);
 		IOperation BeginKillProcesses(string[] processNames, string operationName);

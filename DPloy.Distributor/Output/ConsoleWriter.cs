@@ -214,16 +214,11 @@ namespace DPloy.Distributor.Output
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public IOperation BeginExecuteCommand(string cmd)
+		public IOperation BeginExecuteCommand(string cmd, string operationName)
 		{
-			var template = NodeOperationIndent + "Executing '{0}'";
+			var template = "Executing '{0}'";
 			var maxLineLength = MaxLineLength;
-			var remaining = maxLineLength - template.Length + 3;
-
-			var prunedCommand = PruneEnd(cmd, remaining);
-
-			var message = new StringBuilder();
-			message.AppendFormat(template, prunedCommand);
+			var message = FormatPruned(maxLineLength, NodeOperationIndent, operationName, template, cmd);
 			return CreateOperation(message, maxLineLength);
 		}
 

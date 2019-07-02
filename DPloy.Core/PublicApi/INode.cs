@@ -61,7 +61,18 @@ namespace DPloy.Core.PublicApi
 		/// <exception cref="Exception">In case the process exits with a non-zero value</exception>
 		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null);
 
-		int ExecuteCommand(string cmd);
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="cmd"></param>
+		/// <param name="operationName">
+		///    The name of this operation which is printed to the console when this step is executing.
+		///    If nothing is specified, then DPloy will generate a name based on the parameters, for example
+		///    Executing 'cmd.exe /c', however if a non-zero, non-empty string is specified, then DPloy
+		///    will use that string instead.
+		/// </param>
+		/// <returns></returns>
+		int ExecuteCommand(string cmd, string operationName = null);
 
 		#region Processes
 
