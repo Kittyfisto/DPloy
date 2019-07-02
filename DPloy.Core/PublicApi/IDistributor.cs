@@ -39,7 +39,19 @@ namespace DPloy.Core.PublicApi
 		///    to the console if the process exited with a non-zero value.
 		///    When set to false, then the STDOUT of the started process will never be printed.
 		/// </param>
+		/// <param name="operationName">
+		///    The name of this operation which is printed to the console when this step is executing.
+		///    If nothing is specified, then DPloy will generate a name based on the parameters, for example
+		///    Executing 'cmd.exe /c', however if a non-zero, non-empty string is specified, then DPloy
+		///    will use that string instead.
+		/// </param>
 		/// <exception cref="Exception">In case the process exits with a non-zero value</exception>
-		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true);
+		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null);
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="wildcardPattern"></param>
+		void DeleteFiles(string wildcardPattern);
 	}
 }

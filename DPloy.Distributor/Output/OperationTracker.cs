@@ -103,7 +103,7 @@ namespace DPloy.Distributor.Output
 			return operation;
 		}
 
-		public IOperation BeginExecute(string image, string commandLine)
+		public IOperation BeginExecute(string image, string commandLine, string operationName)
 		{
 			var operation = new Operation();
 			_operations.Add(operation);
@@ -131,7 +131,7 @@ namespace DPloy.Distributor.Output
 			return operation;
 		}
 
-		public IOperation BeginKillProcesses(string processName)
+		public IOperation BeginKillProcesses(string[] processNames, string operationName)
 		{
 			var operation = new Operation();
 			_operations.Add(operation);

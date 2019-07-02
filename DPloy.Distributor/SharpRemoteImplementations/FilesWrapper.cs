@@ -43,6 +43,18 @@ namespace DPloy.Distributor.SharpRemoteImplementations
 			}
 		}
 
+		public async Task DeleteFilesAsync(string filePathPattern)
+		{
+			try
+			{
+				await _files.DeleteFilesAsync(filePathPattern);
+			}
+			catch (Exception e)
+			{
+				throw new RemoteNodeException(_machine, e);
+			}
+		}
+
 		public async Task OpenFileAsync(string filePath, long fileSize)
 		{
 			try

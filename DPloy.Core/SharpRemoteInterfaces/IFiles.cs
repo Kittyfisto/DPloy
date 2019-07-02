@@ -29,6 +29,17 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		Task DeleteFileAsync(string filePath);
 
 		/// <summary>
+		///     Deletes all files matching the given pattern.
+		/// </summary>
+		/// <remarks>
+		///     If either the file OR the directory do NOT exist, then NOTHING happens.
+		/// </remarks>
+		/// <param name="filePathPattern"></param>
+		/// <returns></returns>
+		[Invoke(Dispatch.SerializePerObject)]
+		Task DeleteFilesAsync(string filePathPattern);
+
+		/// <summary>
 		///     Opens the given file for writing.
 		///     If the file does not exist, it will be created.
 		///     If the folder filePath does not exist, it will be created.

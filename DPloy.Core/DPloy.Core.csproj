@@ -47,6 +47,11 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Extensions, Version=1.1.41.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Extensions.1.1.41\lib\net45\System.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
@@ -58,6 +63,7 @@
     <Compile Include="MachineNameAuthenticator.cs" />
     <Compile Include="Paths.cs" />
     <Compile Include="PublicApi\IDistributor.cs" />
+    <Compile Include="SharpRemoteImplementations\Files.cs" />
     <Compile Include="SharpRemoteImplementations\Shell.cs" />
     <Compile Include="SharpRemoteInterfaces\CreateFile.cs" />
     <Compile Include="SharpRemoteInterfaces\FileBatch.cs" />

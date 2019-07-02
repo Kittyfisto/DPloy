@@ -10,7 +10,17 @@ namespace DPloy.Node.SharpRemoteImplementations
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-		public int KillAll(string name)
+		public int KillAll(string[] names)
+		{
+			int numKilled = 0;
+			foreach (var name in names)
+			{
+				numKilled += KillAll(name);
+			}
+			return numKilled;
+		}
+
+		private static int KillAll(string name)
 		{
 			Log.DebugFormat("Kill all processes named '{0}'...", name);
 

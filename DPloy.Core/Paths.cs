@@ -67,10 +67,16 @@ namespace DPloy.Core
 		[Pure]
 		public static string NormalizeAndEvaluate(string relativeOrAbsolutePath)
 		{
+			return NormalizeAndEvaluate(relativeOrAbsolutePath, Directory.GetCurrentDirectory());
+		}
+
+		[Pure]
+		public static string NormalizeAndEvaluate(string relativeOrAbsolutePath, string currentDirectory)
+		{
 			if (relativeOrAbsolutePath.StartsWith("%"))
 				relativeOrAbsolutePath = Evaluate(relativeOrAbsolutePath);
 
-			return Normalize(relativeOrAbsolutePath);
+			return Normalize(relativeOrAbsolutePath, currentDirectory);
 		}
 
 		/// <summary>
@@ -78,11 +84,12 @@ namespace DPloy.Core
 		///     working directory.
 		/// </summary>
 		/// <param name="relativeOrAbsolutePath"></param>
+		/// <param name="currentDirectory"></param>
 		/// <returns></returns>
-		private static string Normalize(string relativeOrAbsolutePath)
+		private static string Normalize(string relativeOrAbsolutePath, string currentDirectory)
 		{
 			if (!Path.IsPathRooted(relativeOrAbsolutePath))
-				relativeOrAbsolutePath = Path.Combine(Directory.GetCurrentDirectory(), relativeOrAbsolutePath);
+				relativeOrAbsolutePath = Path.Combine(currentDirectory, relativeOrAbsolutePath);
 
 			return Path.GetFullPath(new Uri(relativeOrAbsolutePath).LocalPath);
 		}

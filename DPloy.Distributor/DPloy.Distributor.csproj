@@ -74,8 +74,8 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Extensions, Version=1.1.39.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Extensions.1.1.39\lib\net45\System.Extensions.dll</HintPath>
+    <Reference Include="System.Extensions, Version=1.1.41.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Extensions.1.1.41\lib\net45\System.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.Compression.4.3.0\lib\net46\System.IO.Compression.dll</HintPath>
@@ -183,6 +183,6 @@
 copy ..\..\packages\CS-Script.bin.3.28.7\lib\net46\CSScriptLibrary.dll .\CSScriptLibrary.dll
 copy ..\..\packages\CS-Script.bin.3.28.7\lib\net46\Mono.CSharp.dll .\Mono.CSharp.dll
 copy ..\..\packages\Mono.Posix.4.0.0.0\lib\net40\Mono.Posix.dll .\Mono.Posix.dll
-copy ..\..\packages\System.Threading.Extensions.1.1.39\lib\net45\System.Extensions.dll .\System.Extensions.dll</PreBuildEvent>
+copy ..\..\packages\System.Threading.Extensions.1.1.41\lib\net45\System.Extensions.dll .\System.Extensions.dll</PreBuildEvent>
   </PropertyGroup>
 </Project>

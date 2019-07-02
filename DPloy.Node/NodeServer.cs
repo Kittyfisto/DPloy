@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using DPloy.Core;
 using DPloy.Core.SharpRemoteImplementations;
 using DPloy.Core.SharpRemoteInterfaces;
@@ -36,6 +38,9 @@ namespace DPloy.Node
 		private readonly Processes _processes;
 		private readonly Network _network;
 		private readonly SocketEndPoint _socket;
+		private readonly SerialTaskScheduler _serialTaskScheduler;
+		private readonly DefaultTaskScheduler _taskScheduler;
+		private readonly Filesystem _filesystem;
 
 		public NodeServer()
 			: this(null, null, new []{Environment.MachineName})
@@ -56,10 +61,14 @@ namespace DPloy.Node
 				});
 			_socket.OnDisconnected += SocketOnOnDisconnected;
 
+			_serialTaskScheduler = new SerialTaskScheduler();
+			_taskScheduler = new DefaultTaskScheduler();
+			_filesystem = new Filesystem(_serialTaskScheduler, _taskScheduler);
+
 			_interfaces = new Interfaces();
 			_socket.CreateServant<IInterfaces>(ObjectIds.Interface, _interfaces);
 
-			_files = new Files();
+			_files = new Files(_filesystem);
 			_socket.CreateServant<IFiles>(ObjectIds.File, _files);
 
 			_shell = new Shell();
@@ -98,6 +107,8 @@ namespace DPloy.Node
 			GC.KeepAlive(_network);
 
 			_socket?.Dispose();
+			_serialTaskScheduler?.Dispose();
+			_taskScheduler?.Dispose();
 		}
 
 		#endregion

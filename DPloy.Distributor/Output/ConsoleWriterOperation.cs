@@ -27,6 +27,8 @@ namespace DPloy.Distributor.Output
 			WriteOperationBegin(message);
 		}
 
+		public string Message => _message;
+
 		private void WriteOperationBegin(string message)
 		{
 			_writer.Write(message);

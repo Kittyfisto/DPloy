@@ -278,12 +278,28 @@ namespace DPloy.Distributor
 
 		#region Implementation of IClient
 
-		public int KillProcesses(string processName)
+		public int KillProcesses(string processName, string operationName = null)
 		{
-			var operation = _operationTracker.BeginKillProcesses(processName);
+			var operation = _operationTracker.BeginKillProcesses(new[]{processName}, operationName);
 			try
 			{
-				var numKilled = KillProcessesPrivate(processName);
+				var numKilled = KillProcessesPrivate(new []{processName});
+				operation.Success();
+				return numKilled;
+			}
+			catch (Exception e)
+			{
+				operation.Failed(e);
+				throw;
+			}
+		}
+
+		public int KillProcesses(string[] processNames, string operationName = null)
+		{
+			var operation = _operationTracker.BeginKillProcesses(processNames, operationName);
+			try
+			{
+				var numKilled = KillProcessesPrivate(processNames);
 				operation.Success();
 				return numKilled;
 			}
@@ -455,10 +471,10 @@ namespace DPloy.Distributor
 			Execute(destinationFilePath, commandLine ?? "/S");
 		}
 
-		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true)
+		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null)
 		{
 			Log.InfoFormat("Executing '{0} {1}'...", clientFilePath, commandLine);
-			var operation = _operationTracker.BeginExecuteCommand(clientFilePath);
+			var operation = _operationTracker.BeginExecute(clientFilePath, commandLine, operationName);
 			try
 			{
 				var output = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1), printStdOutOnFailure);
@@ -533,7 +549,7 @@ namespace DPloy.Distributor
 			_services.Stop(serviceName);
 		}
 
-		private int KillProcessesPrivate(string processName)
+		private int KillProcessesPrivate(string[] processName)
 		{
 			return _processes.KillAll(processName);
 		}

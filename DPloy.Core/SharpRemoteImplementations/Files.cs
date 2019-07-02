@@ -3,39 +3,42 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.SharpRemoteInterfaces;
 using log4net;
 
-namespace DPloy.Node.SharpRemoteImplementations
+namespace DPloy.Core.SharpRemoteImplementations
 {
-	sealed class Files
+	public sealed class Files
 		: IFiles
 	{
+		private readonly IFilesystem _filesystem;
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-		private readonly Dictionary<string, FileStream> _files;
+		private readonly Dictionary<string, Stream> _files;
 
-		public Files()
+		public Files(IFilesystem filesystem)
 		{
-			_files = new Dictionary<string, FileStream>();
+			_filesystem = filesystem;
+			_files = new Dictionary<string, Stream>();
 		}
 
 		#region Implementation of IFiles
 
 		public bool Exists(string filePath, long expectedFileSize, byte[] expectedHash)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
+			filePath = NormalizeAndEvaluate(filePath);
 
-			if (!File.Exists(filePath))
+			var info = _filesystem.GetFileInfo(filePath).Capture().Result;
+
+			if (!info.Exists)
 			{
 				Log.DebugFormat("The file '{0}' does not exist", filePath);
 				return false;
 			}
 
-			var info = new FileInfo(filePath);
 			if (info.Length != expectedFileSize)
 			{
 				Log.DebugFormat("The file '{0}' exists, but has a different '{1}' filesize than the expected '{2}'",
@@ -69,9 +72,23 @@ namespace DPloy.Node.SharpRemoteImplementations
 			return Task.FromResult(42);
 		}
 
+		public Task DeleteFilesAsync(string filePathPattern)
+		{
+			var path = Path.GetDirectoryName(filePathPattern);
+			var fileName = Path.GetFileName(filePathPattern);
+
+			var absolutePath = NormalizeAndEvaluate(path);
+			var files = _filesystem.EnumerateFiles(absolutePath, fileName, SearchOption.TopDirectoryOnly, tolerateNonExistantPath: true).Result;
+
+			foreach(var file in files)
+				DeleteFile(file);
+
+			return Task.FromResult(42);
+		}
+
 		public Task OpenFileAsync(string filePath, long fileSize)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
+			filePath = NormalizeAndEvaluate(filePath);
 
 			Log.DebugFormat("Creating file '{0}'...", filePath);
 
@@ -80,7 +97,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 			var directoryPath = Path.GetDirectoryName(filePath);
 			CreateDirectoryIfNecessary(directoryPath);
 
-			var fileStream = File.Create(filePath);
+			var fileStream = _filesystem.OpenWrite(filePath).Result;
 			_files.Add(filePath, fileStream);
 
 			Log.InfoFormat("Created file '{0}'", filePath);
@@ -90,7 +107,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task WriteAsync(string filePath, long position, byte[] buffer)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
+			filePath = NormalizeAndEvaluate(filePath);
 
 			Log.DebugFormat("Writing to '{0}': @{1}, {2} bytes...", filePath, position, buffer.Length);
 
@@ -107,7 +124,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task CloseFileAsync(string filePath)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
+			filePath = NormalizeAndEvaluate(filePath);
 
 			Log.DebugFormat("Closing '{0}'...", filePath);
 
@@ -123,7 +140,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task DeleteDirectoryAsync(string destinationDirectoryPath, bool recursive)
 		{
-			var normalizedPath = Paths.NormalizeAndEvaluate(destinationDirectoryPath);
+			var normalizedPath = NormalizeAndEvaluate(destinationDirectoryPath);
 
 			Log.DebugFormat("Deleting '{0}'...", normalizedPath);
 
@@ -136,7 +153,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public Task CreateDirectoryAsync(string destinationDirectoryPath)
 		{
-			var normalizedPath = Paths.NormalizeAndEvaluate(destinationDirectoryPath);
+			var normalizedPath = NormalizeAndEvaluate(destinationDirectoryPath);
 
 			Log.DebugFormat("Creating '{0}'...", normalizedPath);
 
@@ -189,16 +206,24 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public byte[] CalculateSha256(string filePath)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
+			filePath = NormalizeAndEvaluate(filePath);
 
-			return HashCodeCalculator.Sha256(filePath);
+			using (var algorithm = SHA256.Create())
+			using (var stream = _filesystem.OpenRead(filePath).Result)
+			{
+				return HashCodeCalculator.CalculateHash(stream, algorithm);
+			}
 		}
 
 		public byte[] CalculateMD5(string filePath)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
+			filePath = NormalizeAndEvaluate(filePath);
 
-			return HashCodeCalculator.MD5(filePath);
+			using (var algorithm = MD5.Create())
+			using (var stream = _filesystem.OpenRead(filePath).Result)
+			{
+				return HashCodeCalculator.CalculateHash(stream, algorithm);
+			}
 		}
 
 		public Task ExecuteBatchAsync(FileBatch batch)
@@ -213,10 +238,11 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 		public void Unzip(string archivePath, string destinationFolder, bool overwrite)
 		{
-			var actualArchivePath = Paths.NormalizeAndEvaluate(archivePath);
-			var actualDestinationFolder = Paths.NormalizeAndEvaluate(destinationFolder);
+			var actualArchivePath = NormalizeAndEvaluate(archivePath);
+			var actualDestinationFolder = NormalizeAndEvaluate(destinationFolder);
 
-			using (var archive = ZipFile.OpenRead(actualArchivePath))
+			using (var stream = _filesystem.OpenRead(actualArchivePath).Result)
+			using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, true))
 			{
 				foreach (var entry in archive.Entries)
 				{
@@ -226,13 +252,13 @@ namespace DPloy.Node.SharpRemoteImplementations
 
 						if (overwrite)
 							DeleteFile(destinationFilePath);
-						else if (File.Exists(destinationFilePath))
+						else if (_filesystem.FileExists(destinationFilePath).Result)
 							throw new IOException($"The file '{destinationFilePath}' already exists");
 
 						var destinationPath = Path.GetDirectoryName(destinationFilePath);
 						CreateDirectoryIfNecessary(destinationPath);
 
-						using (var destination = File.OpenWrite(destinationFilePath))
+						using (var destination = _filesystem.OpenWrite(destinationFilePath).Result)
 						{
 							source.CopyTo(destination);
 						}
@@ -241,41 +267,37 @@ namespace DPloy.Node.SharpRemoteImplementations
 			}
 		}
 
-		private static void DeleteFile(string filePath)
+		private void DeleteFile(string filePath)
 		{
-			filePath = Paths.NormalizeAndEvaluate(filePath);
+			filePath = NormalizeAndEvaluate(filePath);
 
-			if (File.Exists(filePath))
+			if (_filesystem.FileExists(filePath).Result)
 			{
 				Log.DebugFormat("Deleting file '{0}'...", filePath);
-				File.Delete(filePath);
+				_filesystem.DeleteFile(filePath).Wait();
 				Log.InfoFormat("Deleted file '{0}'", filePath);
 			}
 		}
 
 		private void CopyFile(CreateFile file)
 		{
-			var filePath = Paths.NormalizeAndEvaluate(file.FilePath);
+			var filePath = NormalizeAndEvaluate(file.FilePath);
 
-			if (File.Exists(filePath))
-				File.Delete(filePath);
-
+			DeleteFile(filePath);
 			var directory = Path.GetDirectoryName(filePath);
-			if (!Directory.Exists(directory))
-				Directory.CreateDirectory(directory);
-
-			File.WriteAllBytes(filePath, file.Content);
+			_filesystem.CreateDirectory(directory).Wait();
+			_filesystem.WriteAllBytes(filePath, file.Content).Wait();
 		}
 
 		#endregion
 
-		private static void CreateDirectoryIfNecessary(string directoryPath)
+		private void CreateDirectoryIfNecessary(string directoryPath)
 		{
 			Log.DebugFormat("Creating directory '{0}'...", directoryPath);
 
-			if (!Directory.Exists(directoryPath))
+			if (!_filesystem.DirectoryExists(directoryPath).Result)
 			{
-				Directory.CreateDirectory(directoryPath);
+				_filesystem.CreateDirectory(directoryPath);
 				Log.InfoFormat("Created directory '{0}'", directoryPath);
 			}
 		}
@@ -295,6 +317,11 @@ namespace DPloy.Node.SharpRemoteImplementations
 				}
 			}
 			_files.Clear();
+		}
+
+		private string NormalizeAndEvaluate(string relativeOrAbsolutePath)
+		{
+			return Paths.NormalizeAndEvaluate(relativeOrAbsolutePath, _filesystem.CurrentDirectory);
 		}
 	}
 }

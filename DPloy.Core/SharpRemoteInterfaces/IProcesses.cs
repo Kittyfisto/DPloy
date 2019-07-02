@@ -2,6 +2,6 @@
 {
 	public interface IProcesses
 	{
-		int KillAll(string name);
+		int KillAll(string[] name);
 	}
 }

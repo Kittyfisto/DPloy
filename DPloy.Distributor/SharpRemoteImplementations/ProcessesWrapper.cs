@@ -18,11 +18,11 @@ namespace DPloy.Distributor.SharpRemoteImplementations
 
 		#region Implementation of IProcesses
 
-		public int KillAll(string name)
+		public int KillAll(string[] names)
 		{
 			try
 			{
-				return _processes.KillAll(name);
+				return _processes.KillAll(names);
 			}
 			catch (Exception e)
 			{

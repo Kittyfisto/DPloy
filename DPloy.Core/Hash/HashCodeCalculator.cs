@@ -9,13 +9,6 @@ namespace DPloy.Core.Hash
 	public static class HashCodeCalculator
 	{
 		[Pure]
-		public static byte[] Sha256(string filePath)
-		{
-			using (var algorithm = SHA256.Create())
-				return CalculateHash(filePath, algorithm);
-		}
-
-		[Pure]
 		public static byte[] MD5(string filePath)
 		{
 			using (var algorithm = System.Security.Cryptography.MD5.Create())
@@ -27,21 +20,26 @@ namespace DPloy.Core.Hash
 		{
 			using (var stream = File.OpenRead(filePath))
 			{
-				const int bufferSize = 4096;
-				var buffer = new Byte[bufferSize];
-
-				while (true)
-				{
-					int bytesRead = stream.Read(buffer, 0, buffer.Length);
-					if (bytesRead <= 0)
-						break;
-
-					algorithm.TransformBlock(buffer, 0, bytesRead, buffer, 0);
-				}
-
-				algorithm.TransformFinalBlock(new byte[0], 0, 0);
-				return algorithm.Hash;
+				return CalculateHash(stream, algorithm);
 			}
+		}
+
+		public static byte[] CalculateHash(Stream stream, HashAlgorithm algorithm)
+		{
+			const int bufferSize = 4096;
+			var buffer = new Byte[bufferSize];
+
+			while (true)
+			{
+				int bytesRead = stream.Read(buffer, 0, buffer.Length);
+				if (bytesRead <= 0)
+					break;
+
+				algorithm.TransformBlock(buffer, 0, bytesRead, buffer, 0);
+			}
+
+			algorithm.TransformFinalBlock(new byte[0], 0, 0);
+			return algorithm.Hash;
 		}
 
 		[Pure]

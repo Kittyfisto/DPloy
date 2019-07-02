@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -201,19 +202,15 @@ namespace DPloy.Distributor.Output
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public IOperation BeginExecute(string image, string commandLine)
+		public IOperation BeginExecute(string image, string commandLine, string operationName)
 		{
-			var template = NodeOperationIndent + "Executing '{0}'";
-			var maxLineLength = MaxLineLength;
-			var remaining = maxLineLength - template.Length + 3;
-
+			var template = "Executing '{0}'";
 			var cmd = string.IsNullOrEmpty(commandLine)
 				? image
 				: $"{image} {commandLine}";
-			var prunedCommand = PruneEnd(cmd, remaining);
 
-			var message = new StringBuilder();
-			message.AppendFormat(template, prunedCommand);
+			var maxLineLength = MaxLineLength;
+			var message = FormatPruned(maxLineLength, NodeOperationIndent, operationName, template, cmd);
 			return CreateOperation(message, maxLineLength);
 		}
 
@@ -260,18 +257,14 @@ namespace DPloy.Distributor.Output
 			return CreateOperation(message, maxLineLength);
 		}
 
-		public IOperation BeginKillProcesses(string processName)
+		public IOperation BeginKillProcesses(string[] processNames, string operationName)
 		{
+			var processName = string.Join(", ", processNames);
 			Log.InfoFormat("Killing process(es) '{0}'...", processName);
 
-			var template = NodeOperationIndent + "Killing process(es) '{0}'";
 			var maxLineLength = MaxLineLength;
-			var remaining = maxLineLength - template.Length + 3;
-
-			var prunedServiceName = PruneEnd(processName, remaining);
-
-			var message = new StringBuilder();
-			message.AppendFormat(template, prunedServiceName);
+			var template = "Killing process(es) '{0}'";
+			var message = FormatPruned(maxLineLength, NodeOperationIndent, operationName, template, processName);
 			return CreateOperation(message, maxLineLength);
 		}
 
@@ -283,6 +276,22 @@ namespace DPloy.Distributor.Output
 		private ConsoleWriterOperation CreateOperation(string message, int maxLineLength)
 		{
 			return new ConsoleWriterOperation(Console.Out, message, maxLineLength, _verbose);
+		}
+
+		[Pure]
+		private static string FormatPruned(int maxLineLength, string indent, string alternativeName, string template, string argument1)
+		{
+			if (!string.IsNullOrEmpty(alternativeName))
+			{
+				return PruneEnd(indent + alternativeName, maxLineLength);
+			}
+			else
+			{
+				var indentedTemplate = indent + template;
+				var remaining = maxLineLength - indentedTemplate.Length + 3;
+				var prunedCommand = PruneEnd(argument1, remaining);
+				return string.Format(indentedTemplate, prunedCommand);
+			}
 		}
 
 		private static void PruneTwoPaths(string path1,

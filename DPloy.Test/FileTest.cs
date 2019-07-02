@@ -2,7 +2,10 @@
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
+using DPloy.Core.SharpRemoteImplementations;
 using DPloy.Node.SharpRemoteImplementations;
 using FluentAssertions;
 using NUnit.Framework;
@@ -12,14 +15,27 @@ namespace DPloy.Test
 	[TestFixture]
 	public sealed class FileTest
 	{
+		private InMemoryFilesystem _filesystem;
+
+		[SetUp]
+		public void Setup()
+		{
+			_filesystem = new InMemoryFilesystem();
+			_filesystem.CurrentDirectory = _filesystem.Roots.Result.First().FullName;
+		}
+
 		#region Sha256
 
 		[Test]
 		public void TestSha256UnequalHash()
 		{
-			var file = new Files();
-			var hashA = file.CalculateSha256(@"TestData\1byte_a.txt");
-			var hashB = file.CalculateSha256(@"TestData\1byte_b.txt");
+			var file = new Files(_filesystem);
+
+			_filesystem.WriteAllBytes(@"1byte_a.txt", Encoding.UTF8.GetBytes("a")).Wait();
+			_filesystem.WriteAllBytes(@"1byte_b.txt", Encoding.UTF8.GetBytes("b")).Wait();
+
+			var hashA = file.CalculateSha256(@"1byte_a.txt");
+			var hashB = file.CalculateSha256(@"1byte_b.txt");
 
 			hashA.Should().NotEqual(hashB);
 		}
@@ -27,9 +43,12 @@ namespace DPloy.Test
 		[Test]
 		public void TestSha256EqualHash()
 		{
-			var file = new Files();
-			var hashA = file.CalculateSha256(@"TestData\1byte_a.txt");
-			var hashB = file.CalculateSha256(@"TestData\1byte_a.txt");
+			var file = new Files(_filesystem);
+
+			var path = "a.txt";
+			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a"));
+			var hashA = file.CalculateSha256(path);
+			var hashB = file.CalculateSha256(path);
 
 			hashA.Should().Equal(hashB);
 		}
@@ -37,8 +56,10 @@ namespace DPloy.Test
 		[Test]
 		public void TestSha256CalculateHashEmptyFile()
 		{
-			var file = new Files();
-			var path = @"TestData\Empty.txt";
+			var file = new Files(_filesystem);
+			var path = "Empty.txt";
+			_filesystem.WriteAllBytes(path, new byte[0]);
+
 			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
@@ -48,8 +69,10 @@ namespace DPloy.Test
 		[Test]
 		public void TestSha256CalculateHash1byteFile()
 		{
-			var file = new Files();
-			var path = @"TestData\1byte_a.txt";
+			var file = new Files(_filesystem);
+			var path = "a.txt";
+
+			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a"));
 			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
@@ -59,8 +82,11 @@ namespace DPloy.Test
 		[Test]
 		public void TestSha256CalculateHash4kFile()
 		{
-			var file = new Files();
-			var path = @"TestData\4k.txt";
+			var file = new Files(_filesystem);
+
+			var path = "4k.txt";
+			_filesystem.WriteAllBytes(path, new byte[4096]).Wait();
+
 			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
@@ -74,9 +100,13 @@ namespace DPloy.Test
 		[Test]
 		public void TestMD5UnequalHash()
 		{
-			var file = new Files();
-			var hashA = file.CalculateMD5(@"TestData\1byte_a.txt");
-			var hashB = file.CalculateMD5(@"TestData\1byte_b.txt");
+			var file = new Files(_filesystem);
+
+			_filesystem.WriteAllBytes("a.txt", Encoding.UTF8.GetBytes("a")).Wait();
+			_filesystem.WriteAllBytes("b.txt", Encoding.UTF8.GetBytes("b")).Wait();
+
+			var hashA = file.CalculateMD5("a.txt");
+			var hashB = file.CalculateMD5("b.txt");
 
 			hashA.Should().NotEqual(hashB);
 		}
@@ -84,9 +114,12 @@ namespace DPloy.Test
 		[Test]
 		public void TestMD5EqualHash()
 		{
-			var file = new Files();
-			var hashA = file.CalculateMD5(@"TestData\1byte_a.txt");
-			var hashB = file.CalculateMD5(@"TestData\1byte_a.txt");
+			var file = new Files(_filesystem);
+
+			var path = "a.txt";
+			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a")).Wait();
+			var hashA = file.CalculateMD5(path);
+			var hashB = file.CalculateMD5(path);
 
 			hashA.Should().Equal(hashB);
 		}
@@ -94,8 +127,10 @@ namespace DPloy.Test
 		[Test]
 		public void TestMD5CalculateHashEmptyFile()
 		{
-			var file = new Files();
-			var path = @"TestData\Empty.txt";
+			var file = new Files(_filesystem);
+			var path = @"Empty.txt";
+
+			_filesystem.WriteAllBytes(path, new byte[0]);
 			var hash = file.CalculateMD5(path);
 			var actualHash = CalculateMD5(path);
 
@@ -105,8 +140,10 @@ namespace DPloy.Test
 		[Test]
 		public void TestMD5CalculateHash1byteFile()
 		{
-			var file = new Files();
-			var path = @"TestData\1byte_a.txt";
+			var file = new Files(_filesystem);
+			var path = @"1byte_a.txt";
+
+			_filesystem.WriteAllBytes(path, Encoding.UTF8.GetBytes("a")).Wait();
 			var hash = file.CalculateSha256(path);
 			var actualHash = CalculateSha256(path);
 
@@ -116,8 +153,10 @@ namespace DPloy.Test
 		[Test]
 		public void TestMD5CalculateHash4kFile()
 		{
-			var file = new Files();
-			var path = @"TestData\4k.txt";
+			var file = new Files(_filesystem);
+			var path = @"4k.txt";
+
+			_filesystem.WriteAllBytes(path, new byte[4096]).Wait();
 			var hash = file.CalculateMD5(path);
 			var actualHash = CalculateMD5(path);
 
@@ -127,9 +166,25 @@ namespace DPloy.Test
 		#endregion
 
 		[Test]
+		public void TestDeleteFiles()
+		{
+			var files = new Files(_filesystem);
+
+			_filesystem.CreateFile("a.txt");
+			_filesystem.CreateFile("b.txt");
+			_filesystem.CreateFile("c.csv");
+
+			files.DeleteFilesAsync("*.txt").Wait();
+
+			_filesystem.FileExists("a.txt").Result.Should().BeFalse();
+			_filesystem.FileExists("b.txt").Result.Should().BeFalse();
+			_filesystem.FileExists("c.csv").Result.Should().BeTrue();
+		}
+
+		[Test]
 		public void TestDeleteNonExistingFile()
 		{
-			var files = new Files();
+			var files = new Files(_filesystem);
 			new Action(() => files.DeleteFileAsync("I don't exist.foo").Wait())
 				.Should().NotThrow("because deleting a file which doesn't exist shouldn't be considered an error");
 		}
@@ -137,33 +192,31 @@ namespace DPloy.Test
 		[Test]
 		public void TestUnzip()
 		{
-			var testFolder = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "TestUnzip");
-			var archivePath = Path.Combine(testFolder, "foo.zip");
-			if (File.Exists(archivePath))
-				File.Delete(archivePath);
-			if (!Directory.Exists(testFolder))
-				Directory.CreateDirectory(testFolder);
-
-			using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+			const string archivePath = "foo.zip";
+			using (var archiveStream = _filesystem.OpenWrite(archivePath).Result)
 			{
-				var entry = archive.CreateEntry("Test.txt");
-				using (var stream = entry.Open())
-				using (var writer = new StreamWriter(stream))
+				using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create))
 				{
-					writer.Write("Hello, World!");
+					var entry = archive.CreateEntry("Test.txt");
+					using (var stream = entry.Open())
+					using (var writer = new StreamWriter(stream))
+					{
+						writer.Write("Hello, World!");
+					}
 				}
 			}
 
-			var targetFolder = Path.Combine(testFolder, "Unzipped");
-			if (Directory.Exists(targetFolder))
-				Directory.Delete(targetFolder, recursive: true);
-
-			var file = new Files();
+			var targetFolder = "unzipped";
+			var file = new Files(_filesystem);
 			file.Unzip(archivePath, targetFolder, overwrite: false);
 
 			var targetFile = Path.Combine(targetFolder, "Test.txt");
-			File.Exists(targetFile).Should().BeTrue();
-			File.ReadAllText(targetFile).Should().Be("Hello, World!");
+			_filesystem.FileExists(targetFile).Result.Should().BeTrue();
+			using (var stream = new MemoryStream(_filesystem.ReadAllBytes(targetFile).Result))
+			using (var reader = new StreamReader(stream))
+			{
+				reader.ReadToEnd().Should().Be("Hello, World!");
+			}
 		}
 
 		[Test]
@@ -193,7 +246,7 @@ namespace DPloy.Test
 			var targetFile = Path.Combine(targetFolder, "Test.txt");
 			File.WriteAllText(targetFile, "Foobar");
 
-			var file = new Files();
+			var file = new Files(_filesystem);
 			new Action(() => file.Unzip(archivePath, targetFolder, overwrite: false))
 				.Should().Throw<IOException>();
 
@@ -204,14 +257,10 @@ namespace DPloy.Test
 		[Test]
 		public void TestUnzipOverwrite()
 		{
-			var testFolder = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "TestUnzip");
-			var archivePath = Path.Combine(testFolder, "foo.zip");
-			if (File.Exists(archivePath))
-				File.Delete(archivePath);
-			if (!Directory.Exists(testFolder))
-				Directory.CreateDirectory(testFolder);
+			var archivePath = "foo.zip";
 
-			using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+			using (var archiveStream = _filesystem.OpenWrite(archivePath).Result)
+			using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create))
 			{
 				var entry = archive.CreateEntry("Test.txt");
 				using (var stream = entry.Open())
@@ -221,24 +270,26 @@ namespace DPloy.Test
 				}
 			}
 
-			var targetFolder = Path.Combine(testFolder, "Unzipped");
-			if (!Directory.Exists(targetFolder))
-				Directory.CreateDirectory(targetFolder);
-
+			var targetFolder = "Unzipped";
 			var targetFile = Path.Combine(targetFolder, "Test.txt");
-			File.WriteAllText(targetFile, "Foobar");
+			_filesystem.CreateDirectory(targetFolder).Wait();
+			_filesystem.WriteAllBytes(targetFile, Encoding.UTF8.GetBytes("Foobar")).Wait();
 
-			var file = new Files();
+			var file = new Files(_filesystem);
 			file.Unzip(archivePath, targetFolder, overwrite: true);
 
-			File.Exists(targetFile).Should().BeTrue();
-			File.ReadAllText(targetFile).Should().Be("Hello, World!");
+			_filesystem.FileExists(targetFile).Result.Should().BeTrue();
+			using (var stream = new MemoryStream(_filesystem.ReadAllBytes(targetFile).Result))
+			using (var reader = new StreamReader(stream))
+			{
+				reader.ReadToEnd().Should().Be("Hello, World!");
+			}
 		}
 
 		[Test]
 		public void TestDeleteNonExistingDirectory()
 		{
-			var files = new Files();
+			var files = new Files(_filesystem);
 
 			var path = Path.Combine(Path.GetTempPath(), "dwaadwdadasdawiodwahjwadjdawwad");
 			new Action(() => files.DeleteDirectoryAsync(path, recursive: false).Wait())
@@ -248,7 +299,7 @@ namespace DPloy.Test
 		[Test]
 		public void TestDeleteEmptyDirectory()
 		{
-			var files = new Files();
+			var files = new Files(_filesystem);
 
 			var path = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "EmptyDirectory");
 			if (Directory.Exists(path))
@@ -265,7 +316,7 @@ namespace DPloy.Test
 		[Test]
 		public void TestDeleteNonEmptyDirectory()
 		{
-			var files = new Files();
+			var files = new Files(_filesystem);
 
 			var directory = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "NonEmptyDirectory");
 			Directory.CreateDirectory(directory);
@@ -284,7 +335,7 @@ namespace DPloy.Test
 		[Test]
 		public void TestCreateDirectory()
 		{
-			var files = new Files();
+			var files = new Files(_filesystem);
 
 			var directory = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "NonExistingDirectory");
 			if (Directory.Exists(directory))
@@ -299,7 +350,7 @@ namespace DPloy.Test
 		[Test]
 		public void TestCreateExistingDirectory()
 		{
-			var files = new Files();
+			var files = new Files(_filesystem);
 
 			var directory = Path.Combine(Path.GetTempPath(), "DPloy", "Test", "ExistingDirectory");
 			Directory.CreateDirectory(directory);
@@ -315,20 +366,20 @@ namespace DPloy.Test
 		}
 
 		[Pure]
-		private static byte[] CalculateSha256(string filePath)
+		private byte[] CalculateSha256(string filePath)
 		{
 			using (var sha = SHA256.Create())
-			using (var stream = File.OpenRead(filePath))
+			using (var stream = _filesystem.OpenRead(filePath).Result)
 			{
 				return sha.ComputeHash(stream);
 			}
 		}
 
 		[Pure]
-		private static byte[] CalculateMD5(string filePath)
+		private byte[] CalculateMD5(string filePath)
 		{
 			using (var md5 = MD5.Create())
-			using (var stream = File.OpenRead(filePath))
+			using (var stream = _filesystem.OpenRead(filePath).Result)
 			{
 				return md5.ComputeHash(stream);
 			}
