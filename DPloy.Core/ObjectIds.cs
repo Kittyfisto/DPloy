@@ -8,5 +8,6 @@
 		public static uint Services = 3;
 		public static uint Processes = 4;
 		public static uint Network = 5;
+		public static uint Registry = 6;
 	}
 }

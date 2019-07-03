@@ -196,12 +196,12 @@ namespace DPloy.Distributor
 				new MethodSignature
 				{
 					ReturnType = typeof(void),
-					ParameterTypes = new[] {typeof(IDistributor), typeof(INode)}
+					ParameterTypes = new[] {typeof(INode), typeof(INode)}
 				},
 				new MethodSignature
 				{
 					ReturnType = typeof(void),
-					ParameterTypes = new[] {typeof(IDistributor), typeof(INode), typeof(string[])}
+					ParameterTypes = new[] {typeof(INode), typeof(INode), typeof(string[])}
 				}
 			};
 			signatures.AddRange(signatures.ToList().Select(x => x.WithReturnType(typeof(int))));
@@ -217,22 +217,28 @@ namespace DPloy.Distributor
 		{
 			Log.InfoFormat("Executing '{0}' for '{1}'", method, nodeAddress);
 
-			using (var distributor = new Distributor(operationTracker))
-			using (var node = distributor.ConnectTo(nodeAddress, connectTimeout))
+			using (var taskScheduler = new DefaultTaskScheduler())
 			{
-				var args = new List<object>();
-				var parameters = method.GetParameters();
-				if (parameters[0].ParameterType == typeof(IDistributor))
-					args.Add(distributor);
-				args.Add(node);
-				if (parameters[parameters.Length - 1].ParameterType == typeof(string[]))
-					args.Add(arguments);
+				var filesystem = new Filesystem(taskScheduler);
+				using (var distributor = new Distributor(operationTracker))
+				using (var localNode = new LocalNode(operationTracker, filesystem))
+				using (var remoteNode = distributor.ConnectTo(nodeAddress, connectTimeout))
+				{
+					var args = new List<object>();
+					var parameters = method.GetParameters();
+					if (parameters[0].ParameterType == typeof(INode) && parameters.Length >= 2 &&
+					    parameters[1].ParameterType == typeof(INode))
+						args.Add(localNode);
+					args.Add(remoteNode);
+					if (parameters[parameters.Length - 1].ParameterType == typeof(string[]))
+						args.Add(arguments);
 
-				var ret = InvokeMethod(script, method, args.ToArray());
-				if (method.ReturnType == typeof(int))
-					return (int) ret;
+					var ret = InvokeMethod(script, method, args.ToArray());
+					if (method.ReturnType == typeof(int))
+						return (int)ret;
 
-				return 0;
+					return 0;
+				}
 			}
 		}
 

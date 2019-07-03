@@ -9,12 +9,12 @@ namespace DPloy.Test.Scripts
 {
 	public class DeployWithDistributor
 	{
-		public int Deploy(IDistributor distributor, INode node)
+		public int Deploy(INode localNode, INode remoteNode)
 		{
-			if (distributor == null)
+			if (localNode == null)
 				return -1;
 
-			if (node == null)
+			if (remoteNode == null)
 				return -2;
 
 			return 0;

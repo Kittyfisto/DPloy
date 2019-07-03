@@ -10,10 +10,10 @@ namespace DPloy.Test
 		[Test]
 		public void TestGetPathRelativeTo()
 		{
-			NodeClient.GetPathRelativeTo(@"C:\windows\calc.exe", @"C:\windows\").Should().Be("calc.exe");
-			NodeClient.GetPathRelativeTo(@"C:\windows\calc.exe", @"C:\windows").Should().Be("calc.exe");
-			NodeClient.GetPathRelativeTo(@"C:/windows/calc.exe", @"C:/windows").Should().Be("calc.exe");
-			NodeClient.GetPathRelativeTo(@"C:/windows/calc.exe", @"C:/windows/").Should().Be("calc.exe");
+			RemoteNode.GetPathRelativeTo(@"C:\windows\calc.exe", @"C:\windows\").Should().Be("calc.exe");
+			RemoteNode.GetPathRelativeTo(@"C:\windows\calc.exe", @"C:\windows").Should().Be("calc.exe");
+			RemoteNode.GetPathRelativeTo(@"C:/windows/calc.exe", @"C:/windows").Should().Be("calc.exe");
+			RemoteNode.GetPathRelativeTo(@"C:/windows/calc.exe", @"C:/windows/").Should().Be("calc.exe");
 		}
 	}
 }

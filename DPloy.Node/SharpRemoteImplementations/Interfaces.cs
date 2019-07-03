@@ -17,6 +17,7 @@ namespace DPloy.Node.SharpRemoteImplementations
 			typeModel.Add<IServices>(assumeByReference: true);
 			typeModel.Add<IProcesses>(assumeByReference: true);
 			typeModel.Add<INetwork>(assumeByReference: true);
+			typeModel.Add<IRegistry>(assumeByReference: true);
 			return typeModel;
 		}
 

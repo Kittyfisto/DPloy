@@ -62,8 +62,8 @@
     <Compile Include="IApplicationConstants.cs" />
     <Compile Include="MachineNameAuthenticator.cs" />
     <Compile Include="Paths.cs" />
-    <Compile Include="PublicApi\IDistributor.cs" />
     <Compile Include="SharpRemoteImplementations\Files.cs" />
+    <Compile Include="SharpRemoteImplementations\Registry.cs" />
     <Compile Include="SharpRemoteImplementations\Shell.cs" />
     <Compile Include="SharpRemoteInterfaces\CreateFile.cs" />
     <Compile Include="SharpRemoteInterfaces\FileBatch.cs" />
@@ -71,6 +71,7 @@
     <Compile Include="SharpRemoteInterfaces\IInterfaces.cs" />
     <Compile Include="SharpRemoteInterfaces\INetwork.cs" />
     <Compile Include="SharpRemoteInterfaces\IProcesses.cs" />
+    <Compile Include="SharpRemoteInterfaces\IRegistry.cs" />
     <Compile Include="SharpRemoteInterfaces\IServices.cs" />
     <Compile Include="SharpRemoteInterfaces\IShell.cs" />
     <Compile Include="ObjectIds.cs" />

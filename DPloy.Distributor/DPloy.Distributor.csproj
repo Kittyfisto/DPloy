@@ -100,6 +100,7 @@
     <Compile Include="Bootstrapper.cs" />
     <Compile Include="Exceptions\NotConnectedException.cs" />
     <Compile Include="Exceptions\ProcessReturnedErrorException.cs" />
+    <Compile Include="LocalNode.cs" />
     <Compile Include="MethodSignature.cs" />
     <Compile Include="Options\ListOptions.cs" />
     <Compile Include="Output\NodeTracker.cs" />
@@ -113,6 +114,7 @@
     <Compile Include="Options\ExampleOptions.cs" />
     <Compile Include="PreprocessorContext.cs" />
     <Compile Include="Options\RunOptions.cs" />
+    <Compile Include="SharpRemoteImplementations\RegistryWrapper.cs" />
     <Compile Include="ScriptPreprocessor.cs" />
     <Compile Include="SharpRemoteImplementations\FilesWrapper.cs" />
     <Compile Include="Exceptions\RemoteNodeException.cs" />
@@ -126,7 +128,7 @@
     <Compile Include="Exceptions\ScriptExecutionException.cs" />
     <Compile Include="Exceptions\ScriptCannotBeAccessedException.cs" />
     <Compile Include="ExitCode.cs" />
-    <Compile Include="NodeClient.cs" />
+    <Compile Include="RemoteNode.cs" />
     <Compile Include="Distributor.cs" />
     <Compile Include="ScriptRunner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

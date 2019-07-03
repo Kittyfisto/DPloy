@@ -44,7 +44,6 @@ namespace DPloy.Test
 		[TearDown]
 		public void TearDown()
 		{
-			_nodeClient?.Dispose();
 			_distributor?.Dispose();
 			_nodeServer?.Dispose();
 		}

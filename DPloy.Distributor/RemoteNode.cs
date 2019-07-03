@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using DPloy.Core;
 using DPloy.Core.Hash;
 using DPloy.Core.PublicApi;
+using DPloy.Core.SharpRemoteImplementations;
 using DPloy.Core.SharpRemoteInterfaces;
 using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Output;
@@ -26,7 +27,9 @@ namespace DPloy.Distributor
 	/// <remarks>
 	///     This is the counterpart of the 'NodeServer' class in the DPloy.Node project.
 	/// </remarks>
-	internal sealed class NodeClient : INode
+	internal sealed class RemoteNode
+		: INode
+		, IDisposable
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -36,13 +39,14 @@ namespace DPloy.Distributor
 		private readonly IServices _services;
 		private readonly IProcesses _processes;
 		private readonly INetwork _network;
+		private readonly IRegistry _registry;
 		private readonly SocketEndPoint _socket;
 
 		private const int FilePacketBufferSize = 1024 * 1024 * 4;
 		private const int MaxParallelBatchTasks = 20;
 		private const int MaxParallelCopyTasks = 20;
 
-		private NodeClient(IOperationTracker operationTracker, SocketEndPoint socket, string remoteMachineName)
+		private RemoteNode(IOperationTracker operationTracker, SocketEndPoint socket, string remoteMachineName)
 		{
 			_operationTracker = operationTracker;
 			_socket = socket;
@@ -59,12 +63,14 @@ namespace DPloy.Distributor
 			                                  remoteMachineName);
 			_network = new NetworkWrapper(_socket.GetExistingOrCreateNewProxy<INetwork>(ObjectIds.Network),
 			                                  remoteMachineName);
+			_registry = new RegistryWrapper(_socket.GetExistingOrCreateNewProxy<IRegistry>(ObjectIds.Registry),
+			                                remoteMachineName);
 		}
 
 		private static void ThrowIfIncompatible(SocketEndPoint socket)
 		{
 			var expectedInterfaces = new[]
-				{typeof(IFiles), typeof(IShell), typeof(IServices), typeof(IProcesses), typeof(INetwork)};
+				{typeof(IFiles), typeof(IShell), typeof(IServices), typeof(IProcesses), typeof(INetwork), typeof(IRegistry)};
 
 			var interfaces = socket.GetExistingOrCreateNewProxy<IInterfaces>(ObjectIds.Interface);
 			var actualTypeModel = interfaces.GetTypeModel();
@@ -145,7 +151,7 @@ namespace DPloy.Distributor
 
 		#endregion
 
-		public static NodeClient Create(IOperationTracker operationTracker, IPEndPoint endPoint)
+		public static RemoteNode Create(IOperationTracker operationTracker, IPEndPoint endPoint)
 		{
 			var operation = operationTracker.BeginConnect(endPoint.ToString());
 
@@ -162,7 +168,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public static NodeClient Create(IOperationTracker operationTracker, string address, TimeSpan connectTimeout)
+		public static RemoteNode Create(IOperationTracker operationTracker, string address, TimeSpan connectTimeout)
 		{
 			var operation = operationTracker.BeginConnect(address);
 
@@ -185,7 +191,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static NodeClient CreatePrivate(IOperationTracker operationTracker,
+		private static RemoteNode CreatePrivate(IOperationTracker operationTracker,
 		                                        string address,
 		                                        TimeSpan connectTimeout)
 		{
@@ -199,7 +205,7 @@ namespace DPloy.Distributor
 			try
 			{
 				Connect(socket, address, connectTimeout);
-				return new NodeClient(operationTracker, socket, address);
+				return new RemoteNode(operationTracker, socket, address);
 			}
 			catch (Exception)
 			{
@@ -255,7 +261,7 @@ namespace DPloy.Distributor
 			return true;
 		}
 
-		private static NodeClient CreatePrivate(IOperationTracker operationTracker, IPEndPoint endPoint)
+		private static RemoteNode CreatePrivate(IOperationTracker operationTracker, IPEndPoint endPoint)
 		{
 			var socket = new SocketEndPoint(EndPointType.Client, "Distributor",
 				clientAuthenticator: MachineNameAuthenticator.CreateClient(),
@@ -267,7 +273,7 @@ namespace DPloy.Distributor
 			try
 			{
 				socket.Connect(endPoint);
-				return new NodeClient(operationTracker, socket, endPoint.ToString());
+				return new RemoteNode(operationTracker, socket, endPoint.ToString());
 			}
 			catch (Exception)
 			{
@@ -370,6 +376,11 @@ namespace DPloy.Distributor
 			}
 		}
 
+		public void DeleteFiles(string wildcardPattern)
+		{
+			throw new NotImplementedException();
+		}
+
 		public void CreateDirectory(string destinationDirectoryPath)
 		{
 			var operation = _operationTracker.BeginCreateDirectory(destinationDirectoryPath);
@@ -460,6 +471,16 @@ namespace DPloy.Distributor
 			CopyFile(sourceArchivePath, destinationArchiveFolder);
 
 			UnzipArchive(sourceArchivePath, destinationFolder, destinationArchiveFolder, overwrite: true);
+		}
+
+		public string GetRegistryStringValue(string keyName, string valueName)
+		{
+			return _registry.GetStringValue(keyName, valueName);
+		}
+
+		public uint GetRegistryDwordValue(string keyName, string valueName)
+		{
+			return _registry.GetDwordValue(keyName, valueName);
 		}
 
 		public void Install(string installerPath, string commandLine = null, bool forceCopy = false)

@@ -18,7 +18,7 @@ namespace DPloy.Core.PublicApi
 	/// <remarks>
 	///     TODO: Figure out how a (web)proxy should be configured
 	/// </remarks>
-	public interface INode : IDisposable
+	public interface INode
 	{
 		/// <summary>
 		///     Copies the given installer to this client and executes it (using the given command-line).
@@ -183,6 +183,12 @@ namespace DPloy.Core.PublicApi
 		void DeleteFile(string destinationFilePath);
 
 		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="wildcardPattern"></param>
+		void DeleteFiles(string wildcardPattern);
+
+		/// <summary>
 		///     Creates a directory on this node if it doesn't already exist.
 		/// </summary>
 		/// <param name="destinationDirectoryPath"></param>
@@ -250,6 +256,26 @@ namespace DPloy.Core.PublicApi
 		/// <param name="destinationFolder">A path on the node's machine where the contents of the archive shall be extracted</param>
 		/// <param name="forceCopy">When set to true, then the installer will always be copied to this node, even if a binary identical file already exists at the target location.</param>
 		void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false);
+
+		#endregion
+
+		#region Registry
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="keyName"></param>
+		/// <param name="valueName"></param>
+		/// <returns></returns>
+		string GetRegistryStringValue(string keyName, string valueName);
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="keyName"></param>
+		/// <param name="valueName"></param>
+		/// <returns></returns>
+		uint GetRegistryDwordValue(string keyName, string valueName);
 
 		#endregion
 

@@ -37,6 +37,7 @@ namespace DPloy.Node
 		private readonly Shell _shell;
 		private readonly Processes _processes;
 		private readonly Network _network;
+		private readonly Registry _registry;
 		private readonly SocketEndPoint _socket;
 		private readonly DefaultTaskScheduler _taskScheduler;
 		private readonly Filesystem _filesystem;
@@ -80,6 +81,9 @@ namespace DPloy.Node
 
 			_network = new Network();
 			_socket.CreateServant<INetwork>(ObjectIds.Network, _network);
+
+			_registry = new Registry();
+			_socket.CreateServant<IRegistry>(ObjectIds.Registry, _registry);
 		}
 
 		private void LogAllowedHosts(IEnumerable<string> allowedMachineNames)
@@ -103,6 +107,7 @@ namespace DPloy.Node
 			GC.KeepAlive(_services);
 			GC.KeepAlive(_processes);
 			GC.KeepAlive(_network);
+			GC.KeepAlive(_registry);
 
 			_socket?.Dispose();
 			_taskScheduler?.Dispose();
