@@ -8,10 +8,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using DPloy.Core;
 using DPloy.Core.Hash;
-using DPloy.Core.PublicApi;
-using DPloy.Core.SharpRemoteImplementations;
 using DPloy.Core.SharpRemoteInterfaces;
-using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Output;
 using DPloy.Distributor.SharpRemoteImplementations;
 using log4net;
@@ -28,18 +25,14 @@ namespace DPloy.Distributor
 	///     This is the counterpart of the 'NodeServer' class in the DPloy.Node project.
 	/// </remarks>
 	internal sealed class RemoteNode
-		: INode
+		: AbstractNode
 		, IDisposable
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
 		private readonly IOperationTracker _operationTracker;
 		private readonly IFiles _files;
-		private readonly IShell _shell;
-		private readonly IServices _services;
-		private readonly IProcesses _processes;
 		private readonly INetwork _network;
-		private readonly IRegistry _registry;
 		private readonly SocketEndPoint _socket;
 
 		private const int FilePacketBufferSize = 1024 * 1024 * 4;
@@ -47,6 +40,11 @@ namespace DPloy.Distributor
 		private const int MaxParallelCopyTasks = 20;
 
 		private RemoteNode(IOperationTracker operationTracker, SocketEndPoint socket, string remoteMachineName)
+			: base(operationTracker,
+			       new ShellWrapper(socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell), remoteMachineName),
+			       new ServicesWrapper(socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services), remoteMachineName),
+			       new ProcessesWrapper(socket.GetExistingOrCreateNewProxy<IProcesses>(ObjectIds.Processes), remoteMachineName),
+			       new RegistryWrapper(socket.GetExistingOrCreateNewProxy<IRegistry>(ObjectIds.Registry), remoteMachineName))
 		{
 			_operationTracker = operationTracker;
 			_socket = socket;
@@ -55,16 +53,8 @@ namespace DPloy.Distributor
 
 			_files = new FilesWrapper(_socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File),
 			                          remoteMachineName);
-			_shell = new ShellWrapper(_socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell),
-			                          remoteMachineName);
-			_services = new ServicesWrapper(_socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services),
-			                                remoteMachineName);
-			_processes = new ProcessesWrapper(_socket.GetExistingOrCreateNewProxy<IProcesses>(ObjectIds.Processes),
-			                                  remoteMachineName);
 			_network = new NetworkWrapper(_socket.GetExistingOrCreateNewProxy<INetwork>(ObjectIds.Network),
 			                                  remoteMachineName);
-			_registry = new RegistryWrapper(_socket.GetExistingOrCreateNewProxy<IRegistry>(ObjectIds.Registry),
-			                                remoteMachineName);
 		}
 
 		private static void ThrowIfIncompatible(SocketEndPoint socket)
@@ -284,39 +274,7 @@ namespace DPloy.Distributor
 
 		#region Implementation of IClient
 
-		public int KillProcesses(string processName, string operationName = null)
-		{
-			var operation = _operationTracker.BeginKillProcesses(new[]{processName}, operationName);
-			try
-			{
-				var numKilled = KillProcessesPrivate(new []{processName});
-				operation.Success();
-				return numKilled;
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
-		public int KillProcesses(string[] processNames, string operationName = null)
-		{
-			var operation = _operationTracker.BeginKillProcesses(processNames, operationName);
-			try
-			{
-				var numKilled = KillProcessesPrivate(processNames);
-				operation.Success();
-				return numKilled;
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
-		public void DownloadFile(string sourceFileUri, string destinationFilePath)
+		public override void DownloadFile(string sourceFileUri, string destinationFilePath)
 		{
 			var operation = _operationTracker.BeginDownloadFile(sourceFileUri, destinationFilePath);
 			try
@@ -331,7 +289,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CreateFile(string destinationFilePath, byte[] content)
+		public override void CreateFile(string destinationFilePath, byte[] content)
 		{
 			var operation = _operationTracker.BeginCreateFile(destinationFilePath);
 			try
@@ -346,7 +304,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyFile(string sourceFilePath, string destinationFilePath, bool forceCopy = false)
+		public override void CopyFile(string sourceFilePath, string destinationFilePath, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyFile(sourceFilePath, destinationFilePath);
 			try
@@ -361,7 +319,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder, bool forceCopy = false)
+		public override void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyFiles(sourceFilePaths.ToList(), destinationFolder);
 			try
@@ -376,12 +334,12 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void DeleteFiles(string wildcardPattern)
+		public override void DeleteFiles(string wildcardPattern)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void CreateDirectory(string destinationDirectoryPath)
+		public override void CreateDirectory(string destinationDirectoryPath)
 		{
 			var operation = _operationTracker.BeginCreateDirectory(destinationDirectoryPath);
 			try
@@ -396,7 +354,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
+		public override void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
 			try
@@ -420,7 +378,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
+		public override void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
 			try
@@ -435,7 +393,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void DeleteDirectoryRecursive(string destinationDirectoryPath)
+		public override void DeleteDirectoryRecursive(string destinationDirectoryPath)
 		{
 			var operation = _operationTracker.BeginDeleteDirectory(destinationDirectoryPath);
 			try
@@ -450,7 +408,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void DeleteFile(string destinationFilePath)
+		public override void DeleteFile(string destinationFilePath)
 		{
 			var operation = _operationTracker.BeginDeleteFile(destinationFilePath);
 			try
@@ -465,7 +423,7 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false)
+		public override void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false)
 		{
 			var destinationArchiveFolder = @"%temp%";
 			CopyFile(sourceArchivePath, destinationArchiveFolder);
@@ -473,112 +431,7 @@ namespace DPloy.Distributor
 			UnzipArchive(sourceArchivePath, destinationFolder, destinationArchiveFolder, overwrite: true);
 		}
 
-		public string GetRegistryStringValue(string keyName, string valueName)
-		{
-			return _registry.GetStringValue(keyName, valueName);
-		}
-
-		public uint GetRegistryDwordValue(string keyName, string valueName)
-		{
-			return _registry.GetDwordValue(keyName, valueName);
-		}
-
-		public void Install(string installerPath, string commandLine = null, bool forceCopy = false)
-		{
-			var destinationPath = Path.Combine(Paths.Temp, "DPloy", "Installers");
-			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
-
-			CopyFile(installerPath, destinationFilePath, forceCopy);
-			Execute(destinationFilePath, commandLine ?? "/S");
-		}
-
-		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null)
-		{
-			Log.InfoFormat("Executing '{0} {1}'...", clientFilePath, commandLine);
-			var operation = _operationTracker.BeginExecute(clientFilePath, commandLine, operationName);
-			try
-			{
-				var output = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1), printStdOutOnFailure);
-				if (output.ExitCode != 0)
-					throw new ProcessReturnedErrorException(clientFilePath, output, printStdOutOnFailure);
-
-				operation.Success();
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
-		public int ExecuteCommand(string cmd, string operationName = null)
-		{
-			Log.InfoFormat("Executing command '{0}'...", cmd);
-			var operation = _operationTracker.BeginExecuteCommand(cmd, operationName);
-			try
-			{
-				var exitCode = ExecuteCommandPrivate(cmd);
-				operation.Success();
-				return exitCode;
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
-		public void StartService(string serviceName)
-		{
-			var operation = _operationTracker.BeginStartService(serviceName);
-			try
-			{
-				StartServicePrivate(serviceName);
-				operation.Success();
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
-		public void StopService(string serviceName)
-		{
-			var operation = _operationTracker.BeginStopService(serviceName);
-			try
-			{
-				StopServicePrivate(serviceName);
-				operation.Success();
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
 		#endregion
-
-		private void StartServicePrivate(string serviceName)
-		{
-			_services.Start(serviceName);
-		}
-
-		private void StopServicePrivate(string serviceName)
-		{
-			_services.Stop(serviceName);
-		}
-
-		private int KillProcessesPrivate(string[] processName)
-		{
-			return _processes.KillAll(processName);
-		}
-
-		private int ExecuteCommandPrivate(string cmd)
-		{
-			return _shell.ExecuteCommand(cmd);
-		}
 
 		private void UnzipArchive(string sourceArchivePath, string destinationFolder, string tmpFolder, bool overwrite)
 		{

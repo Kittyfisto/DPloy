@@ -3,9 +3,9 @@ using System.Reflection;
 using DPloy.Core.SharpRemoteInterfaces;
 using log4net;
 
-namespace DPloy.Node.SharpRemoteImplementations
+namespace DPloy.Core.SharpRemoteImplementations
 {
-	sealed class Processes
+	public sealed class Processes
 		: IProcesses
 	{
 		private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);

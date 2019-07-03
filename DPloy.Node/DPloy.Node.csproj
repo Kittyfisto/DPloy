@@ -50,8 +50,6 @@
       <HintPath>..\packages\System.Threading.Extensions.2.0.45\lib\net45\System.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL" />
-    <Reference Include="System.IO.Compression.FileSystem" />
-    <Reference Include="System.ServiceProcess" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyLoader.cs" />
@@ -63,8 +61,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SharpRemoteImplementations\Interfaces.cs" />
     <Compile Include="SharpRemoteImplementations\Network.cs" />
-    <Compile Include="SharpRemoteImplementations\Processes.cs" />
-    <Compile Include="SharpRemoteImplementations\Services.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -1,96 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using DPloy.Core.PublicApi;
 using DPloy.Core.SharpRemoteImplementations;
-using DPloy.Distributor.Exceptions;
 using DPloy.Distributor.Output;
 using Registry = DPloy.Core.SharpRemoteImplementations.Registry;
 
 namespace DPloy.Distributor
 {
 	internal class LocalNode
-		: INode
+		: AbstractNode
 		, IDisposable
 	{
 		private readonly IOperationTracker _operationTracker;
-		private readonly Shell _shell;
 		private readonly Files _files;
-		private readonly Registry _registry;
 
 		public LocalNode(IOperationTracker operationTracker, IFilesystem filesystem)
+			: base(operationTracker, new Shell(), new Services(), new Processes(), new Registry())
 		{
 			_operationTracker = operationTracker;
-			_shell = new Shell();
 			_files = new Files(filesystem);
-			_registry = new Registry();
 		}
 
-		public void Install(string installerPath, string commandLine = null, bool forceCopy = false)
+		public override void DownloadFile(string sourceFileUri, string destinationFilePath)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null,
-			bool printStdOutOnFailure = true, string operationName = null)
-		{
-			var operation = _operationTracker.BeginExecute(clientFilePath, commandLine, operationName);
-			try
-			{
-				var output = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1), printStdOutOnFailure);
-				if (output.ExitCode != 0)
-					throw new ProcessReturnedErrorException(clientFilePath, output, printStdOutOnFailure);
-
-				operation.Success();
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
-		public int ExecuteCommand(string cmd, string operationName = null)
+		public override void CreateFile(string destinationFilePath, byte[] content)
 		{
 			throw new NotImplementedException();
 		}
 
-		public int KillProcesses(string processName, string operationName = null)
+		public override void CopyFile(string sourceFilePath, string destinationFilePath, bool forceCopy = false)
 		{
 			throw new NotImplementedException();
 		}
 
-		public int KillProcesses(string[] processNames, string operationName = null)
+		public override void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder, bool forceCopy = false)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void DownloadFile(string sourceFileUri, string destinationFilePath)
+		public override void DeleteFile(string destinationFilePath)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void CreateFile(string destinationFilePath, byte[] content)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void CopyFile(string sourceFilePath, string destinationFilePath, bool forceCopy = false)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void CopyFiles(IEnumerable<string> sourceFilePaths, string destinationFolder, bool forceCopy = false)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void DeleteFile(string destinationFilePath)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void DeleteFiles(string wildcardPattern)
+		public override void DeleteFiles(string wildcardPattern)
 		{
 			var operation = _operationTracker.BeginDeleteFile(wildcardPattern);
 			try
@@ -105,47 +61,27 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public void CreateDirectory(string destinationDirectoryPath)
+		public override void CreateDirectory(string destinationDirectoryPath)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
+		public override void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
+		public override void CopyDirectoryRecursive(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void DeleteDirectoryRecursive(string destinationDirectoryPath)
+		public override void DeleteDirectoryRecursive(string destinationDirectoryPath)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string GetRegistryStringValue(string keyName, string valueName)
-		{
-			return _registry.GetStringValue(keyName, valueName);
-		}
-
-		public uint GetRegistryDwordValue(string keyName, string valueName)
-		{
-			return _registry.GetDwordValue(keyName, valueName);
-		}
-
-		public void StartService(string serviceName)
-		{
-			throw new NotImplementedException();
-		}
-
-		public void StopService(string serviceName)
+		public override void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false)
 		{
 			throw new NotImplementedException();
 		}

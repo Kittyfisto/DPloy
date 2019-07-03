@@ -53,6 +53,7 @@
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceProcess" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Log4Net.cs" />
@@ -63,7 +64,9 @@
     <Compile Include="MachineNameAuthenticator.cs" />
     <Compile Include="Paths.cs" />
     <Compile Include="SharpRemoteImplementations\Files.cs" />
+    <Compile Include="SharpRemoteImplementations\Processes.cs" />
     <Compile Include="SharpRemoteImplementations\Registry.cs" />
+    <Compile Include="SharpRemoteImplementations\Services.cs" />
     <Compile Include="SharpRemoteImplementations\Shell.cs" />
     <Compile Include="SharpRemoteInterfaces\CreateFile.cs" />
     <Compile Include="SharpRemoteInterfaces\FileBatch.cs" />
