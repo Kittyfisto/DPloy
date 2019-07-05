@@ -15,7 +15,8 @@ namespace DPloy.Core.SharpRemoteImplementations
 
 		#region Implementation of IShell
 
-		public ProcessOutput StartAndWaitForExit(string file, string commandLine, TimeSpan timeout, bool printStdOutOnFailure)
+		public ProcessOutput StartAndWaitForExit(string file, string commandLine, TimeSpan timeout,
+			bool printStdOutOnFailure, bool showWindow)
 		{
 			var fullFilePath = Paths.NormalizeAndEvaluate(file);
 			Log.InfoFormat("Executing '{0} {1}'...", fullFilePath, commandLine);
@@ -29,14 +30,20 @@ namespace DPloy.Core.SharpRemoteImplementations
 				{
 					process.StartInfo = new ProcessStartInfo
 					{
-						RedirectStandardOutput = true,
-						RedirectStandardError = true,
-						WindowStyle = ProcessWindowStyle.Hidden,
-						UseShellExecute = false,
+						UseShellExecute = true,
 						FileName = fullFilePath,
 						Arguments = commandLine
 					};
-					var output = StartAndWaitForExit(process, timeout, printStdOutOnFailure);
+
+					if (!showWindow)
+					{
+						process.StartInfo.RedirectStandardError = true;
+						process.StartInfo.RedirectStandardOutput = true;
+						process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+						process.StartInfo.UseShellExecute = false;
+					}
+
+					var output = StartAndWaitForExit(process, timeout, showWindow ? false : printStdOutOnFailure);
 					Log.InfoFormat("The command '{0} {1}' returned '{2}'", fullFilePath, commandLine, output.ExitCode);
 					return output;
 				}
@@ -55,15 +62,23 @@ namespace DPloy.Core.SharpRemoteImplementations
 		{
 			string output = null;
 			string error = null;
+
 			process.Start();
+
 			var task = Task.Factory.StartNew(() =>
 			{
-				output = process.StandardOutput.ReadToEnd();
-				error = process.StandardError.ReadToEnd();
+				if (printStdOutOnFailure)
+				{
+					output = process.StandardOutput.ReadToEnd();
+					error = process.StandardError.ReadToEnd();
+				}
 				process.WaitForExit();
 
-				Log.DebugFormat("StandardOutput: {0}", output);
-				Log.DebugFormat("StandardError: {0}", error);
+				if (printStdOutOnFailure)
+				{
+					Log.DebugFormat("StandardOutput: {0}", output);
+					Log.DebugFormat("StandardError: {0}", error);
+				}
 			});
 
 			if (!task.Wait(timeout))
@@ -94,7 +109,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			}
 		}
 
-		public int ExecuteCommand(string command)
+		public int ExecuteCommand(string command, bool showWindow)
 		{
 			Log.InfoFormat("Executing '{0}'...", command);
 

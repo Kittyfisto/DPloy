@@ -41,6 +41,7 @@ namespace DPloy.Distributor
 
 		private RemoteNode(IOperationTracker operationTracker, SocketEndPoint socket, string remoteMachineName)
 			: base(operationTracker,
+			       new FilesWrapper(socket.GetExistingOrCreateNewProxy<IFiles>(ObjectIds.File), remoteMachineName),
 			       new ShellWrapper(socket.GetExistingOrCreateNewProxy<IShell>(ObjectIds.Shell), remoteMachineName),
 			       new ServicesWrapper(socket.GetExistingOrCreateNewProxy<IServices>(ObjectIds.Services), remoteMachineName),
 			       new ProcessesWrapper(socket.GetExistingOrCreateNewProxy<IProcesses>(ObjectIds.Processes), remoteMachineName),
@@ -339,21 +340,6 @@ namespace DPloy.Distributor
 			throw new NotImplementedException();
 		}
 
-		public override void CreateDirectory(string destinationDirectoryPath)
-		{
-			var operation = _operationTracker.BeginCreateDirectory(destinationDirectoryPath);
-			try
-			{
-				CreateDirectoryPrivate(destinationDirectoryPath);
-				operation.Success();
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
 		public override void CopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath, bool forceCopy = false)
 		{
 			var operation = _operationTracker.BeginCopyDirectory(sourceDirectoryPath, destinationDirectoryPath);
@@ -393,42 +379,17 @@ namespace DPloy.Distributor
 			}
 		}
 
-		public override void DeleteDirectoryRecursive(string destinationDirectoryPath)
-		{
-			var operation = _operationTracker.BeginDeleteDirectory(destinationDirectoryPath);
-			try
-			{
-				DeleteDirectoryRecursivePrivate(destinationDirectoryPath);
-				operation.Success();
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
-		public override void DeleteFile(string destinationFilePath)
-		{
-			var operation = _operationTracker.BeginDeleteFile(destinationFilePath);
-			try
-			{
-				DeleteFilePrivate(destinationFilePath);
-				operation.Success();
-			}
-			catch (Exception e)
-			{
-				operation.Failed(e);
-				throw;
-			}
-		}
-
 		public override void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false)
 		{
 			var destinationArchiveFolder = @"%temp%";
 			CopyFile(sourceArchivePath, destinationArchiveFolder);
 
 			UnzipArchive(sourceArchivePath, destinationFolder, destinationArchiveFolder, overwrite: true);
+		}
+
+		public override IEnumerable<string> EnumerateFiles(string wildcardPattern)
+		{
+			throw new NotImplementedException();
 		}
 
 		#endregion
@@ -520,16 +481,6 @@ namespace DPloy.Distributor
 
 			var destinationSmallFilePaths = smallFiles.Select(x => tmp[x]).ToList();
 			CopyFileBatch(smallFiles, destinationSmallFilePaths);
-		}
-
-		private void DeleteDirectoryRecursivePrivate(string destinationDirectoryPath)
-		{
-			_files.DeleteDirectoryAsync(destinationDirectoryPath, recursive: true).Wait();
-		}
-
-		private void DeleteFilePrivate(string destinationFilePath)
-		{
-			_files.DeleteFileAsync(destinationFilePath).Wait();
 		}
 
 		private void DownloadFilePrivate(string sourceFileUri, string destinationDirectory)

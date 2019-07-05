@@ -18,6 +18,13 @@ namespace DPloy.Core.SharpRemoteInterfaces
 		bool Exists(string filePath, long expectedFileSize, byte[] expectedHash);
 
 		/// <summary>
+		///     Verifies if there exists a file at the given location.
+		/// </summary>
+		/// <param name="filePath"></param>
+		/// <returns></returns>
+		bool FileExists(string filePath);
+
+		/// <summary>
 		///     Deletes the given file.
 		/// </summary>
 		/// <remarks>

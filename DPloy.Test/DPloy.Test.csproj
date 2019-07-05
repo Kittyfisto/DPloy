@@ -45,8 +45,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Extensions, Version=2.0.45.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Extensions.2.0.45\lib\net45\System.Extensions.dll</HintPath>
+    <Reference Include="System.Extensions, Version=2.0.47.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Extensions.2.0.47\lib\net45\System.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL" />
     <Reference Include="System.IO.Compression.FileSystem" />
@@ -60,6 +60,7 @@
     <Compile Include="AssemblySetup.cs" />
     <Compile Include="ConsoleWriterTest.cs" />
     <Compile Include="DistributorAcceptanceTest.cs" />
+    <Compile Include="LocalNodeTest.cs" />
     <Compile Include="NodeAcceptanceTest.cs" />
     <Compile Include="FileTest.cs" />
     <Compile Include="NodeTest.cs" />
@@ -73,6 +74,7 @@
     <Compile Include="Scripts\DeployWithParameter.cs" />
     <Compile Include="Scripts\ExecuteCmd.cs" />
     <Compile Include="Scripts\ExecuteDir.cs" />
+    <Compile Include="Scripts\RunWithLocalNode.cs" />
     <Compile Include="ServicesTest.cs" />
     <Compile Include="TaskListTest.cs" />
     <None Include="app.config" />

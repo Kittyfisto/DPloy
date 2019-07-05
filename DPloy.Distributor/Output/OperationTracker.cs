@@ -7,7 +7,7 @@ namespace DPloy.Distributor.Output
 	/// <summary>
 	/// Keeps track of individual operations.
 	/// </summary>
-	internal sealed class OperationTracker
+	public sealed class OperationTracker
 		: IOperationTracker
 	{
 		private readonly List<Operation> _operations;
@@ -21,117 +21,105 @@ namespace DPloy.Distributor.Output
 
 		public IOperation BeginLoadScript(string scriptFilePath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginCompileScript(string scriptFilePath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginConnect(string destination)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginDisconnect(IPEndPoint remoteEndPoint)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
+		}
+
+		public IOperation BeginEnumerateFiles(string wildcardPattern)
+		{
+			return AddOperation();
+		}
+
+		public IOperation BeginFileExists(string fileName)
+		{
+			return AddOperation();
 		}
 
 		public IOperation BeginCopyFile(string sourcePath, string destinationPath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginCopyFiles(IReadOnlyList<string> sourceFiles, string destinationFolder)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginCopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginCreateDirectory(string destinationDirectoryPath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginDeleteDirectory(string destinationDirectoryPath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginDeleteFile(string destinationFilePath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginDownloadFile(string sourceFileUri, string destinationDirectory)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginCreateFile(string destinationFilePath)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginExecute(string image, string commandLine, string operationName)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginExecuteCommand(string cmd, string operationName)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginStartService(string serviceName)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginStopService(string serviceName)
 		{
-			var operation = new Operation();
-			_operations.Add(operation);
-			return operation;
+			return AddOperation();
 		}
 
 		public IOperation BeginKillProcesses(string[] processNames, string operationName)
+		{
+			return AddOperation();
+		}
+
+		public IOperation BeginCustomOperation(string operationName)
+		{
+			return AddOperation();
+		}
+
+		private IOperation AddOperation()
 		{
 			var operation = new Operation();
 			_operations.Add(operation);

@@ -96,7 +96,8 @@ namespace DPloy.Distributor
 			var scriptPath = NormalizeAndEvaluate(options.Script);
 			var arguments = options.ScriptArguments.ToArray();
 			var progressWriter = new ConsoleWriter(options.Verbose);
-			return (ExitCode) ScriptRunner.Run(progressWriter, scriptPath, arguments);
+			var grouper = new OperationGrouper(progressWriter);
+			return (ExitCode) ScriptRunner.Run(grouper, scriptPath, arguments);
 		}
 
 		private static ExitCode Deploy(DeployOptions options)
@@ -104,8 +105,9 @@ namespace DPloy.Distributor
 			var scriptPath = NormalizeAndEvaluate(options.Script);
 
 			var progressWriter = new ConsoleWriter(options.Verbose);
+			var grouper = new OperationGrouper(progressWriter);
 			var nodes = options.Nodes.ToArray();
-			return (ExitCode) ScriptRunner.Deploy(progressWriter,
+			return (ExitCode) ScriptRunner.Deploy(grouper,
 			                                      scriptPath,
 			                                      nodes,
 			                                      options.Arguments,
@@ -136,9 +138,10 @@ namespace DPloy.Distributor
 				Console.WriteLine("Error: {0}", e.Message);
 				return ExitCode.ScriptCannotBeAccessed;
 			}
-			
+
 			var progressWriter = new ConsoleWriter(options.Verbose);
-			return ScriptRunner.ListEntryPoints(progressWriter, scriptPath);
+			var grouper = new OperationGrouper(progressWriter);
+			return ScriptRunner.ListEntryPoints(grouper, scriptPath);
 		}
 
 		private static void PrintUnhandledScriptException(bool verbose, ScriptExecutionException e)

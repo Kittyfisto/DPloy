@@ -46,8 +46,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Extensions, Version=2.0.45.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Threading.Extensions.2.0.45\lib\net45\System.Extensions.dll</HintPath>
+    <Reference Include="System.Extensions, Version=2.0.47.0, Culture=neutral, PublicKeyToken=951c63ca832f7094, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Extensions.2.0.47\lib\net45\System.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL" />
   </ItemGroup>
@@ -87,19 +87,9 @@
       <Link>Dependencies\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="x64D\SharpRemote.PostmortemDebugger.dll" />
-    <Content Include="x64D\SharpRemote.PostmortemDebugger.pdb" />
-    <Content Include="x64\SharpRemote.PostmortemDebugger.dll" />
-    <Content Include="x64\SharpRemote.PostmortemDebugger.pdb" />
-    <Content Include="x86D\SharpRemote.PostmortemDebugger.dll" />
-    <Content Include="x86D\SharpRemote.PostmortemDebugger.pdb" />
-    <Content Include="x86\SharpRemote.PostmortemDebugger.dll" />
-    <Content Include="x86\SharpRemote.PostmortemDebugger.pdb" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>cd $(OutDir)
-copy ..\..\packages\System.Threading.Extensions.2.0.45\lib\net45\System.Extensions.dll .\System.Extensions.dll</PreBuildEvent>
+copy ..\..\packages\System.Threading.Extensions.2.0.47\lib\net45\System.Extensions.dll .\System.Extensions.dll</PreBuildEvent>
   </PropertyGroup>
 </Project>

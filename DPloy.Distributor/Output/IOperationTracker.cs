@@ -12,6 +12,8 @@ namespace DPloy.Distributor.Output
 		IOperation BeginCompileScript(string scriptFilePath);
 		IOperation BeginConnect(string destination);
 		IOperation BeginDisconnect(IPEndPoint remoteEndPoint);
+		IOperation BeginEnumerateFiles(string wildcardPattern);
+		IOperation BeginFileExists(string fileName);
 		IOperation BeginCopyFile(string sourcePath, string destinationPath);
 		IOperation BeginCopyFiles(IReadOnlyList<string> sourceFiles, string destinationFolder);
 		IOperation BeginCopyDirectory(string sourceDirectoryPath, string destinationDirectoryPath);
@@ -25,5 +27,6 @@ namespace DPloy.Distributor.Output
 		IOperation BeginStartService(string serviceName);
 		IOperation BeginStopService(string serviceName);
 		IOperation BeginKillProcesses(string[] processNames, string operationName);
+		IOperation BeginCustomOperation(string operationName);
 	}
 }

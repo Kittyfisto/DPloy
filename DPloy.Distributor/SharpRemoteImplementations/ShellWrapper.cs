@@ -18,11 +18,12 @@ namespace DPloy.Distributor.SharpRemoteImplementations
 
 		#region Implementation of IShell
 
-		public ProcessOutput StartAndWaitForExit(string file, string commandLine, TimeSpan timeout, bool printStdOutOnFailure)
+		public ProcessOutput StartAndWaitForExit(string file, string commandLine, TimeSpan timeout,
+			bool printStdOutOnFailure, bool showWindow)
 		{
 			try
 			{
-				return _shell.StartAndWaitForExit(file, commandLine, timeout, printStdOutOnFailure);
+				return _shell.StartAndWaitForExit(file, commandLine, timeout, printStdOutOnFailure, showWindow);
 			}
 			catch (Exception e)
 			{
@@ -30,11 +31,11 @@ namespace DPloy.Distributor.SharpRemoteImplementations
 			}
 		}
 
-		public int ExecuteCommand(string command)
+		public int ExecuteCommand(string command, bool showWindow)
 		{
 			try
 			{
-				return _shell.ExecuteCommand(command);
+				return _shell.ExecuteCommand(command, showWindow);
 			}
 			catch (Exception e)
 			{

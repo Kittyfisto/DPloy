@@ -66,6 +66,12 @@ namespace DPloy.Core.SharpRemoteImplementations
 			return true;
 		}
 
+		public bool FileExists(string filePath)
+		{
+			var absoluteFilePath = NormalizeAndEvaluate(filePath);
+			return _filesystem.FileExists(absoluteFilePath);
+		}
+
 		public Task DeleteFileAsync(string filePath)
 		{
 			DeleteFile(filePath);
@@ -171,7 +177,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			Exception exception = null;
 			for (int i = 0; i < maxTries; ++i)
 			{
-				if (CanDeleteDirectory(normalizedPath, recursive, out exception))
+				if (TryDeleteDirectory(normalizedPath, recursive, out exception))
 					return;
 
 				// With every failure we wait a little bit longer...
@@ -181,7 +187,7 @@ namespace DPloy.Core.SharpRemoteImplementations
 			throw exception ?? new NotImplementedException();
 		}
 
-		private static bool CanDeleteDirectory(string normalizedPath, bool recursive, out Exception exception)
+		private static bool TryDeleteDirectory(string normalizedPath, bool recursive, out Exception exception)
 		{
 			try
 			{
@@ -197,10 +203,36 @@ namespace DPloy.Core.SharpRemoteImplementations
 				exception = null;
 				return true;
 			}
+			catch (UnauthorizedAccessException e)
+			{
+				Log.DebugFormat("Caught exception while trying to delete folder '{0}':\r\n{1}", normalizedPath, e);
+
+				RepairAccess(normalizedPath);
+				exception = null;
+				return false;
+			}
 			catch (Exception e)
 			{
 				exception = e;
 				return false;
+			}
+		}
+
+		private static void RepairAccess(string normalizedPath)
+		{
+			Log.DebugFormat("Trying to repair access to '{0}'...", normalizedPath);
+
+			foreach (var file in Directory.EnumerateFiles(normalizedPath, "*", SearchOption.AllDirectories))
+			{
+				try
+				{
+					File.Delete(file);
+				}
+				catch (UnauthorizedAccessException e)
+				{
+					Log.DebugFormat("Unable to access '{0}', changing file attributes to normal...", e);
+					File.SetAttributes(file, FileAttributes.Normal);
+				}
 			}
 		}
 

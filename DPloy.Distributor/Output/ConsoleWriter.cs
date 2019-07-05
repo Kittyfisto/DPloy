@@ -91,6 +91,32 @@ namespace DPloy.Distributor.Output
 			return CreateOperation(message, maxLineLength);
 		}
 
+		public IOperation BeginEnumerateFiles(string wildcardPattern)
+		{
+			var template = NodeOperationIndent + "Enumerating files in '{0}'";
+			var maxLineLength = MaxLineLength;
+			var remamining = maxLineLength - template.Length + 3;
+
+			var prunedPattern = PrunePath(wildcardPattern, remamining);
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedPattern);
+			return CreateOperation(message, maxLineLength);
+		}
+
+		public IOperation BeginFileExists(string fileName)
+		{
+			var template = NodeOperationIndent + "Testing if '{0}' exists";
+
+			var maxLineLength = MaxLineLength;
+			var remamining = maxLineLength - template.Length + 3;
+
+			var prunedFileName = PrunePath(fileName, remamining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedFileName);
+			return CreateOperation(message, maxLineLength);
+		}
+
 		public IOperation BeginCopyFile(string sourcePath, string destinationPath)
 		{
 			var template = NodeOperationIndent + "Copying '{0}' to '{1}'";
@@ -260,6 +286,19 @@ namespace DPloy.Distributor.Output
 			var maxLineLength = MaxLineLength;
 			var template = "Killing process(es) '{0}'";
 			var message = FormatPruned(maxLineLength, NodeOperationIndent, operationName, template, processName);
+			return CreateOperation(message, maxLineLength);
+		}
+
+		public IOperation BeginCustomOperation(string operationName)
+		{
+			var template = NodeOperationIndent + operationName;
+			var maxLineLength = MaxLineLength;
+			var remaining = maxLineLength - template.Length + 3;
+
+			var prunedName = PruneEnd(operationName, remaining);
+
+			var message = new StringBuilder();
+			message.AppendFormat(template, prunedName);
 			return CreateOperation(message, maxLineLength);
 		}
 

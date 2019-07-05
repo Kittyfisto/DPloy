@@ -92,6 +92,13 @@ namespace DPloy.Test
 		}
 
 		[Test]
+		[Description("Verifies that an INode object is forwarded to a Run() method, if it desires it")]
+		public void TestRunWithLocalNode()
+		{
+			Run("RunWithLocalNode.cs", new[] {"42"}).Should().Be(42);
+		}
+
+		[Test]
 		public void TestInvalidArguments()
 		{
 			Execute("dwadwawdaw").Should().Be((int)Distributor.ExitCode.InvalidArguments);

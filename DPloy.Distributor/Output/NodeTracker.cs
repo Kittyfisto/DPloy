@@ -5,14 +5,14 @@ namespace DPloy.Distributor.Output
 {
 	internal sealed class NodeTracker
 	{
-		private readonly ConsoleWriter _consoleWriter;
+		private readonly IOperationTracker _operationTracker;
 		private readonly IReadOnlyList<string> _nodes;
 		private readonly Dictionary<string, OperationTracker> _operationTrackers;
 		private readonly object _syncRoot;
 
-		public NodeTracker(ConsoleWriter consoleWriter, IReadOnlyList<string> nodes)
+		public NodeTracker(IOperationTracker operationTracker, IReadOnlyList<string> nodes)
 		{
-			_consoleWriter = consoleWriter;
+			_operationTracker = operationTracker;
 			_nodes = nodes;
 			_operationTrackers = new Dictionary<string, OperationTracker>();
 			_syncRoot = new object();

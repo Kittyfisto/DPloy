@@ -31,6 +31,18 @@ namespace DPloy.Distributor.SharpRemoteImplementations
 			}
 		}
 
+		public bool FileExists(string filePath)
+		{
+			try
+			{
+				return _files.FileExists(filePath);
+			}
+			catch (Exception e)
+			{
+				throw new RemoteNodeException(_machine, e);
+			}
+		}
+
 		public async Task DeleteFileAsync(string filePath)
 		{
 			try

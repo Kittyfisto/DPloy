@@ -58,8 +58,13 @@ namespace DPloy.Core.PublicApi
 		///    Executing 'cmd.exe /c', however if a non-zero, non-empty string is specified, then DPloy
 		///    will use that string instead.
 		/// </param>
+		/// <param name="showWindow">
+		///    When set to true, then another shell window will open which displays all the output of the command
+		///    and closes once the command is finished. When set to false, then no additional window will spawn
+		///    and the output remains completely hidden. Set to false by default.
+		/// </param>
 		/// <exception cref="Exception">In case the process exits with a non-zero value</exception>
-		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null);
+		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null, bool showWindow = false);
 
 		/// <summary>
 		/// 
@@ -71,8 +76,13 @@ namespace DPloy.Core.PublicApi
 		///    Executing 'cmd.exe /c', however if a non-zero, non-empty string is specified, then DPloy
 		///    will use that string instead.
 		/// </param>
+		/// <param name="showWindow">
+		///    When set to true, then another shell window will open which displays all the output of the command
+		///    and closes once the command is finished. When set to false, then no additional window will spawn
+		///    and the output remains completely hidden. Set to false by default.
+		/// </param>
 		/// <returns></returns>
-		int ExecuteCommand(string cmd, string operationName = null);
+		int ExecuteCommand(string cmd, string operationName = null, bool showWindow = false);
 
 		#region Processes
 
@@ -257,6 +267,20 @@ namespace DPloy.Core.PublicApi
 		/// <param name="forceCopy">When set to true, then the installer will always be copied to this node, even if a binary identical file already exists at the target location.</param>
 		void CopyAndUnzipArchive(string sourceArchivePath, string destinationFolder, bool forceCopy = false);
 
+		/// <summary>
+		///    Tests if a file exists on this node's file system.
+		/// </summary>
+		/// <param name="fileName"></param>
+		/// <returns></returns>
+		bool FileExists(string fileName);
+
+		/// <summary>
+		///    Enumerates files on this node's filesystem.
+		/// </summary>
+		/// <param name="folder"></param>
+		/// <returns></returns>
+		IEnumerable<string> EnumerateFiles(string folder);
+
 		#endregion
 
 		#region Registry
@@ -295,5 +319,35 @@ namespace DPloy.Core.PublicApi
 		void StopService(string serviceName);
 
 		#endregion
+
+		/// <summary>
+		///    Executes the given action as a single operatation.
+		///    If the action throws, then it is assumed that the operation failed, otherwise
+		///    it is assumed that it succeeds.
+		/// </summary>
+		/// <remarks>
+		///    This method allows you to perform any code and have it show up in the execution
+		///    log as the given operation. You can even call multiple <see cref="INode"/> methods
+		///    and they will show up with the given <paramref name="operationName"/> and not
+		///    as individual operations.
+		/// </remarks>
+		/// <param name="fn"></param>
+		/// <param name="operationName"></param>
+		void RunCustomOperation(Action<INode> fn, string operationName);
+
+		/// <summary>
+		///    Executes the given action as a single operatation.
+		///    If the action throws, then it is assumed that the operation failed, otherwise
+		///    it is assumed that it succeeds.
+		/// </summary>
+		/// <remarks>
+		///    This method allows you to perform any code and have it show up in the execution
+		///    log as the given operation. You can even call multiple <see cref="INode"/> methods
+		///    and they will show up with the given <paramref name="operationName"/> and not
+		///    as individual operations.
+		/// </remarks>
+		/// <param name="fn"></param>
+		/// <param name="operationName"></param>
+		T RunCustomOperation<T>(Func<INode, T> fn, string operationName);
 	}
 }

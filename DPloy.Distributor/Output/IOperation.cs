@@ -2,7 +2,7 @@
 
 namespace DPloy.Distributor.Output
 {
-	internal interface IOperation
+	public interface IOperation
 	{
 		void Success();
 		void Failed(Exception exception);

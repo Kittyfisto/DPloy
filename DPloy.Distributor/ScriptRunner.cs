@@ -31,7 +31,7 @@ namespace DPloy.Distributor
 		/// <param name="consoleWriter"></param>
 		/// <param name="scriptFilePath"></param>
 		/// <returns></returns>
-		public static ExitCode ListEntryPoints(ConsoleWriter consoleWriter, string scriptFilePath)
+		public static ExitCode ListEntryPoints(IOperationTracker consoleWriter, string scriptFilePath)
 		{
 			var script = LoadAndCompileScript(consoleWriter, scriptFilePath);
 			var runMethods = FindMethods(script, RunEntryPointName);
@@ -66,16 +66,16 @@ namespace DPloy.Distributor
 		/// <summary>
 		/// Executes the given script's Run(string[]) method.
 		/// </summary>
-		/// <param name="consoleWriter"></param>
+		/// <param name="operationTracker"></param>
 		/// <param name="scriptFilePath"></param>
 		/// <param name="scriptArguments"></param>
 		/// <returns></returns>
-		public static int Run(ConsoleWriter consoleWriter, string scriptFilePath, IReadOnlyList<string> scriptArguments)
+		public static int Run(IOperationTracker operationTracker, string scriptFilePath, IReadOnlyList<string> scriptArguments)
 		{
-			var script = LoadAndCompileScript(consoleWriter, scriptFilePath);
+			var script = LoadAndCompileScript(operationTracker, scriptFilePath);
 			Log.InfoFormat("Executing '{0}'...", scriptFilePath);
 
-			var exitCode = Run(script, scriptArguments);
+			var exitCode = RunPrivate(operationTracker, script, scriptArguments);
 
 			Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
 
@@ -85,50 +85,63 @@ namespace DPloy.Distributor
 		/// <summary>
 		/// Executes the given script's Deploy(INode) method.
 		/// </summary>
-		/// <param name="consoleWriter"></param>
+		/// <param name="operationTracker"></param>
 		/// <param name="scriptFilePath"></param>
 		/// <param name="nodeAddresses"></param>
 		/// <param name="arguments"></param>
 		/// <param name="connectTimeout"></param>
 		/// <returns></returns>
-		public static int Deploy(ConsoleWriter consoleWriter,
+		public static int Deploy(IOperationTracker operationTracker,
 		                         string scriptFilePath,
 		                         IReadOnlyList<string> nodeAddresses,
 		                         IEnumerable<string> arguments,
 		                         TimeSpan connectTimeout)
 		{
-			var script = LoadAndCompileScript(consoleWriter, scriptFilePath);
+			var script = LoadAndCompileScript(operationTracker, scriptFilePath);
 			Log.InfoFormat("Executing '{0}'...", scriptFilePath);
 
-			var exitCode = Deploy(script, consoleWriter, nodeAddresses, arguments, connectTimeout);
+			var exitCode = Deploy(script, operationTracker, nodeAddresses, arguments, connectTimeout);
 
 			Log.InfoFormat("'{0}' returned '{1}'", scriptFilePath, exitCode);
 
 			return exitCode;
 		}
 
-		private static int Run(object script, IReadOnlyList<string> args)
+		private static int RunPrivate(IOperationTracker operationTracker, object script, IReadOnlyList<string> args)
 		{
 			var method = FindMethod(script, RunEntryPointName);
 			if (method == null)
 				throw new ScriptExecutionException($"The script is missing a main entry point");
 
-			if (method.ReturnType == typeof(void))
+			using (var taskScheduler = new DefaultTaskScheduler())
 			{
-				InvokeMethod(script, method, new object[]{args});
-				return 0;
-			}
+				var filesystem = new Filesystem(taskScheduler);
+				using (var node = new LocalNode(operationTracker, filesystem))
+				{
+					var parameters = method.GetParameters();
+					var scriptArguments = new List<object>();
+					if (parameters.Length > 1 && parameters[0].ParameterType == typeof(INode))
+						scriptArguments.Add(node);
+					scriptArguments.Add(args);
 
-			if (method.ReturnType == typeof(int))
-			{
-				return (int) InvokeMethod(script, method, new object[]{args});
+					if (method.ReturnType == typeof(void))
+					{
+						InvokeMethod(script, method, scriptArguments);
+						return 0;
+					}
+
+					if (method.ReturnType == typeof(int))
+					{
+						return (int)InvokeMethod(script, method, scriptArguments);
+					}
+				}
 			}
 
 			throw new ScriptExecutionException($"Expected main entry point to either return no value or to return an Int32, but found: {method.ReturnType.Name}");
 		}
 
 		private static int Deploy(object script,
-		                          ConsoleWriter consoleWriter,
+		                          IOperationTracker operationTracker,
 		                          IReadOnlyList<string> nodeAddresses,
 		                          IEnumerable<string> arguments,
 		                          TimeSpan connectTimeout)
@@ -137,10 +150,10 @@ namespace DPloy.Distributor
 
 			if (nodeAddresses.Count == 1)
 			{
-				return DeployTo(script, method, consoleWriter, nodeAddresses[0], arguments, connectTimeout);
+				return DeployTo(script, method, operationTracker, nodeAddresses[0], arguments, connectTimeout);
 			}
 
-			var tracker = new NodeTracker(consoleWriter, nodeAddresses);
+			var tracker = new NodeTracker(operationTracker, nodeAddresses);
 			Parallel.ForEach(nodeAddresses, nodeAddress =>
 			{
 				var nodeTracker = tracker.Get(nodeAddress);
@@ -266,13 +279,13 @@ namespace DPloy.Distributor
 			return methods;
 		}
 
-		private static object InvokeMethod(object scriptObject, MethodInfo main, object[] scriptArguments)
+		private static object InvokeMethod(object scriptObject, MethodInfo main, IReadOnlyList<object> scriptArguments)
 		{
 			object obj = main.IsStatic ? null : scriptObject;
 
 			try
 			{
-				return main.Invoke(obj, scriptArguments);
+				return main.Invoke(obj, scriptArguments.ToArray());
 			}
 			catch (TargetInvocationException e)
 			{
@@ -284,13 +297,13 @@ namespace DPloy.Distributor
 			}
 		}
 
-		private static object LoadAndCompileScript(ConsoleWriter operationTracker, string scriptFilePath)
+		private static object LoadAndCompileScript(IOperationTracker operationTracker, string scriptFilePath)
 		{
 			var script = LoadAndPreprocessScript(operationTracker, scriptFilePath);
 			return CompileScript(operationTracker, scriptFilePath, script);
 		}
 
-		private static string LoadAndPreprocessScript(ConsoleWriter operationTracker, string scriptFilePath)
+		private static string LoadAndPreprocessScript(IOperationTracker operationTracker, string scriptFilePath)
 		{
 			Log.InfoFormat("Loading '{0}'...", scriptFilePath);
 
@@ -349,7 +362,7 @@ namespace DPloy.Distributor
 			return exceptions;
 		}
 
-		private static object CompileScript(ConsoleWriter operationTracker, string scriptFilePath, string script)
+		private static object CompileScript(IOperationTracker operationTracker, string scriptFilePath, string script)
 		{
 			Log.InfoFormat("Compiling '{0}'...", scriptFilePath);
 
