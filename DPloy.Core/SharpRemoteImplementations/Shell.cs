@@ -37,10 +37,10 @@ namespace DPloy.Core.SharpRemoteImplementations
 
 					if (!showWindow)
 					{
-						process.StartInfo.RedirectStandardError = true;
 						process.StartInfo.RedirectStandardOutput = true;
 						process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 						process.StartInfo.UseShellExecute = false;
+						process.StartInfo.CreateNoWindow = true;
 					}
 
 					var output = StartAndWaitForExit(process, timeout, showWindow ? false : printStdOutOnFailure);
@@ -61,7 +61,6 @@ namespace DPloy.Core.SharpRemoteImplementations
 		private static ProcessOutput StartAndWaitForExit(Process process, TimeSpan timeout, bool printStdOutOnFailure)
 		{
 			string output = null;
-			string error = null;
 
 			process.Start();
 
@@ -70,14 +69,12 @@ namespace DPloy.Core.SharpRemoteImplementations
 				if (printStdOutOnFailure)
 				{
 					output = process.StandardOutput.ReadToEnd();
-					error = process.StandardError.ReadToEnd();
 				}
 				process.WaitForExit();
 
 				if (printStdOutOnFailure)
 				{
 					Log.DebugFormat("StandardOutput: {0}", output);
-					Log.DebugFormat("StandardError: {0}", error);
 				}
 			});
 
@@ -93,7 +90,6 @@ namespace DPloy.Core.SharpRemoteImplementations
 			{
 				ExitCode = process.ExitCode,
 				StandardOutput = output,
-				StandardError = error
 			};
 		}
 
