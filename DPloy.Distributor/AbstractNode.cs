@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using DPloy.Core;
 using DPloy.Core.PublicApi;
@@ -167,23 +168,26 @@ namespace DPloy.Distributor
 			return _registry.GetDwordValue(keyName, valueName);
 		}
 
-		public void Install(string installerPath, string commandLine = null, bool forceCopy = false)
+		public void Install(string installerPath, string commandLine = null, bool forceCopy = false, int[] successReturnCodes = null)
 		{
 			var destinationPath = Path.Combine(Paths.Temp, "DPloy", "Installers");
 			var destinationFilePath = Path.Combine(destinationPath, Path.GetFileName(installerPath));
 
 			CopyFile(installerPath, destinationFilePath, forceCopy);
-			Execute(destinationFilePath, commandLine ?? "/S");
+			Execute(destinationFilePath, commandLine ?? "/S", successReturnCodes: successReturnCodes);
 		}
 
-		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null, bool showWindow = false)
+		public void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null, bool showWindow = false, int[] successReturnCodes = null)
 		{
+			if (successReturnCodes == null || successReturnCodes.Length == 0)
+				successReturnCodes = new[] {0};
+
 			Log.InfoFormat("Executing '{0} {1}'...", clientFilePath, commandLine);
 			var operation = _operationTracker.BeginExecute(clientFilePath, commandLine, operationName);
 			try
 			{
 				var output = _shell.StartAndWaitForExit(clientFilePath, commandLine, timeout ?? TimeSpan.FromMilliseconds(-1), printStdOutOnFailure, showWindow);
-				if (output.ExitCode != 0)
+				if (!successReturnCodes.Contains(output.ExitCode))
 					throw new ProcessReturnedErrorException(clientFilePath, output, printStdOutOnFailure);
 
 				operation.Success();

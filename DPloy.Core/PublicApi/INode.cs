@@ -30,7 +30,8 @@ namespace DPloy.Core.PublicApi
 		/// <param name="installerPath"></param>
 		/// <param name="commandLine"></param>
 		/// <param name="forceCopy">When set to true, then the installer will always be copied to this node, even if a binary identical file already exists at the target location.</param>
-		void Install(string installerPath, string commandLine = null, bool forceCopy = false);
+		/// <param name="successReturnCodes">An optional list of return codes which are to be interpreted as the installation having been successful. Exists because there are installers which do not honor the 0 = success guideline.</param>
+		void Install(string installerPath, string commandLine = null, bool forceCopy = false, int[] successReturnCodes = null);
 
 		/// <summary>
 		///     Starts a new process from the given image and waits for the process to exit.
@@ -63,8 +64,13 @@ namespace DPloy.Core.PublicApi
 		///    and closes once the command is finished. When set to false, then no additional window will spawn
 		///    and the output remains completely hidden. Set to false by default.
 		/// </param>
+		/// <param name="successReturnCodes">
+		///    An optional list of return codes which are to be interpreted as the installation having been successful.
+		///    Exists because there are many applications which do not honor the 0 = success guideline.
+		///    When nothing or an empty array is specified, then 0 is interpreted as success, everything else as failure.
+		/// </param>
 		/// <exception cref="Exception">In case the process exits with a non-zero value</exception>
-		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null, bool showWindow = false);
+		void Execute(string clientFilePath, string commandLine = null, TimeSpan? timeout = null, bool printStdOutOnFailure = true, string operationName = null, bool showWindow = false, int[] successReturnCodes = null);
 
 		/// <summary>
 		/// 
